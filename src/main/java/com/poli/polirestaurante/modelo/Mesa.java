@@ -29,6 +29,7 @@ public class Mesa {
 
     public Mesa() {
     }
+    
 
     public Mesa(int numero, String estado) {
         this.numero = numero;
