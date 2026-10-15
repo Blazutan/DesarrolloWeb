@@ -23,7 +23,7 @@ public class Pedido {
     private Mesero mesero;
 
     @ManyToOne
-    @JoinColumn (name = "cocina_id", nullable = false)
+    @JoinColumn(name = "cocina_id")
     private Cocina cocina;
 
     @ManyToOne 
