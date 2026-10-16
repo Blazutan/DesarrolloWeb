@@ -15,6 +15,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.poli.polirestaurante.modelo.Cocina;
 import com.poli.polirestaurante.repository.CocinaRepository;
@@ -24,6 +25,9 @@ class CocinaDAOImplTest {
 
     @Mock
     private CocinaRepository cocinaRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private CocinaDAOImpl cocinaDAO;
@@ -38,9 +42,11 @@ class CocinaDAOImplTest {
 
     @Test
     void crear_deberiaGuardarYRetornarLaCocina() {
+        when(passwordEncoder.encode("hashedpassword")).thenReturn("$2a$encoded-password");
         when(cocinaRepository.save(cocina)).thenReturn(cocina);
 
         assertThat(cocinaDAO.crear(cocina)).isEqualTo(cocina);
+        assertThat(cocina.getPassword()).isEqualTo("$2a$encoded-password");
         verify(cocinaRepository, times(1)).save(cocina);
     }
 

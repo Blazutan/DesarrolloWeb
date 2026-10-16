@@ -1,6 +1,10 @@
 package com.poli.polirestaurante.modelo;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.OneToMany;
 
 @Entity 
 @Table (name="pedido")
@@ -31,12 +36,20 @@ public class Pedido {
     private EstadoPedido estado;
 
     private LocalDateTime fechaCreacion;
+    private LocalDateTime fechaUltimaActualizacion;
     private LocalDateTime fechaEnPreparacion;
     private LocalDateTime fechaListo;
     private LocalDateTime fechaEntregado;
-    private LocalDateTime fechaCancelacion;
-
+    private LocalDateTime fechaProximoRecordatorio;
+    private int numeroRecordatorios;
+    private boolean alertaRecibida;
     private String motivoCancelacion;
+
+    @jakarta.persistence.Column(precision = 12, scale = 2)
+    private BigDecimal precioTotal = BigDecimal.ZERO;
+
+    @OneToMany(mappedBy = "pedido")
+    private List<DetallePedido> detalles = new ArrayList<>();
 
     public Pedido() {
     }
@@ -44,6 +57,7 @@ public class Pedido {
         this.mesero = mesero;
         this.estado = estado;
         this.fechaCreacion = LocalDateTime.now();
+        this.fechaUltimaActualizacion = this.fechaCreacion;
     }
 
     public Long getId() {
@@ -86,6 +100,14 @@ public class Pedido {
         this.fechaCreacion = fechaCreacion;
     }
 
+    public LocalDateTime getFechaUltimaActualizacion() {
+        return fechaUltimaActualizacion;
+    }
+
+    public void setFechaUltimaActualizacion(LocalDateTime fechaUltimaActualizacion) {
+        this.fechaUltimaActualizacion = fechaUltimaActualizacion;
+    }
+
     public LocalDateTime getFechaEnPreparacion() {
         return fechaEnPreparacion;
     }
@@ -110,12 +132,28 @@ public class Pedido {
         this.fechaEntregado = fechaEntregado;
     }
 
-    public LocalDateTime getFechaCancelacion() {
-        return fechaCancelacion;
+    public LocalDateTime getFechaProximoRecordatorio() {
+        return fechaProximoRecordatorio;
     }
 
-    public void setFechaCancelacion(LocalDateTime fechaCancelacion) {
-        this.fechaCancelacion = fechaCancelacion;
+    public void setFechaProximoRecordatorio(LocalDateTime fechaProximoRecordatorio) {
+        this.fechaProximoRecordatorio = fechaProximoRecordatorio;
+    }
+
+    public int getNumeroRecordatorios() {
+        return numeroRecordatorios;
+    }
+
+    public void setNumeroRecordatorios(int numeroRecordatorios) {
+        this.numeroRecordatorios = numeroRecordatorios;
+    }
+
+    public boolean isAlertaRecibida() {
+        return alertaRecibida;
+    }
+
+    public void setAlertaRecibida(boolean alertaRecibida) {
+        this.alertaRecibida = alertaRecibida;
     }
 
     public String getMotivoCancelacion() {
@@ -124,6 +162,31 @@ public class Pedido {
 
     public void setMotivoCancelacion(String motivoCancelacion) {
         this.motivoCancelacion = motivoCancelacion;
+    }
+
+    public BigDecimal getPrecioTotal() {
+        return precioTotal == null ? BigDecimal.ZERO : precioTotal;
+    }
+
+    public void setPrecioTotal(BigDecimal precioTotal) {
+        this.precioTotal = precioTotal;
+    }
+
+    public List<DetallePedido> getDetalles() {
+        return detalles;
+    }
+
+    public void agregarDetalle(DetallePedido detalle) {
+        Objects.requireNonNull(detalle, "El detalle del pedido es obligatorio.");
+        detalles.add(detalle);
+        detalle.setPedido(this);
+        precioTotal = calcularTotal();
+    }
+
+    public BigDecimal calcularTotal() {
+        return detalles.stream()
+                .map(DetallePedido::calcularSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
 }

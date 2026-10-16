@@ -1,5 +1,6 @@
 package com.poli.polirestaurante.dao;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,20 @@ public class PedidoDAOImpl implements PedidoDAO {
     @Override
     public List<Pedido> listarPendientes() {
         return pedidoRepository.findByEstado_NombreIgnoreCaseOrderByFechaCreacionAsc("PENDIENTE");
+    }
+
+    @Override
+    public List<Pedido> listarAlertas(String correoMesero) {
+        return pedidoRepository
+                .findByMesero_CorreoIgnoreCaseAndEstado_NombreIgnoreCaseAndAlertaRecibidaFalseOrderByFechaListoAsc(
+                        correoMesero, "LISTO");
+    }
+
+    @Override
+    public List<Pedido> listarRecordatoriosVencidos(LocalDateTime ahora, int maximoRecordatorios) {
+        return pedidoRepository
+                .findByEstado_NombreIgnoreCaseAndAlertaRecibidaFalseAndNumeroRecordatoriosLessThanAndFechaProximoRecordatorioLessThanEqual(
+                        "LISTO", maximoRecordatorios, ahora);
     }
 
     @Override
