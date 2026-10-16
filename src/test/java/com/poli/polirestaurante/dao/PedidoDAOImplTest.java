@@ -59,6 +59,15 @@ class PedidoDAOImplTest {
     }
 
     @Test
+    void listarPendientes_deberiaSolicitarLaColaOrdenadaPorFechaDeCreacion() {
+        when(pedidoRepository.findByEstado_NombreIgnoreCaseOrderByFechaCreacionAsc("PENDIENTE"))
+                .thenReturn(List.of(pedido));
+
+        assertThat(pedidoDAO.listarPendientes()).containsExactly(pedido);
+        verify(pedidoRepository).findByEstado_NombreIgnoreCaseOrderByFechaCreacionAsc("PENDIENTE");
+    }
+
+    @Test
     void buscarPorId_cuandoExiste_deberiaRetornarElPedido() {
         when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
 
