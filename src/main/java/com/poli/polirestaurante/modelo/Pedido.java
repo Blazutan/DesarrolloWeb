@@ -34,6 +34,7 @@ public class Pedido {
     private LocalDateTime fechaEnPreparacion;
     private LocalDateTime fechaListo;
     private LocalDateTime fechaEntregado;
+    private LocalDateTime fechaCancelacion;
 
     private String motivoCancelacion;
 
@@ -107,6 +108,14 @@ public class Pedido {
 
     public void setFechaEntregado(LocalDateTime fechaEntregado) {
         this.fechaEntregado = fechaEntregado;
+    }
+
+    public LocalDateTime getFechaCancelacion() {
+        return fechaCancelacion;
+    }
+
+    public void setFechaCancelacion(LocalDateTime fechaCancelacion) {
+        this.fechaCancelacion = fechaCancelacion;
     }
 
     public String getMotivoCancelacion() {

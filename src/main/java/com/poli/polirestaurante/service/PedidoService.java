@@ -87,6 +87,7 @@ public class PedidoService {
 
         pedido.setEstado(buscarEstado(CANCELADO));
         pedido.setMotivoCancelacion(motivo.trim());
+        pedido.setFechaCancelacion(LocalDateTime.now());
         return pedidoDAO.actualizar(pedido);
     }
 

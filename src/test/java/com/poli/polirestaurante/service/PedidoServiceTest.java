@@ -123,6 +123,7 @@ class PedidoServiceTest {
 
         assertThat(resultado.getEstado()).isSameAs(cancelado);
         assertThat(resultado.getMotivoCancelacion()).isEqualTo("Cliente se retiró");
+        assertThat(resultado.getFechaCancelacion()).isNotNull();
     }
 
     @Test

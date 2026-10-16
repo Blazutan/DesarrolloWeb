@@ -10,7 +10,7 @@ Este proyecto cubre cinco requisitos funcionales de la [wiki del proyecto](https
 2. **Visualización de la cola de cocina:** los pedidos pendientes se consultan desde el más antiguo al más reciente.
 3. **Cambio de estado del pedido:** cocina puede avanzar `PENDIENTE` → `EN PREPARACIÓN` → `LISTO`; el mesero puede avanzar `LISTO` → `ENTREGADO`. No se permiten saltos de estado.
 4. **Cancelación de pedido:** se guarda el motivo de cancelación y no se permite cancelar pedidos entregados o ya cancelados.
-5. **Guardado de tiempos:** se persisten las fechas de creación, inicio de preparación, pedido listo y entrega para calcular la duración de cada etapa.
+5. **Guardado de tiempos:** se persisten las fechas de creación, inicio de preparación, pedido listo, entrega y cancelación para registrar cada cambio de estado y calcular la duración de cada etapa.
 
 ## Configuración
 
