@@ -24,10 +24,10 @@ class DatabaseConnectionTest {
     }
 
     @Test
-    void laBaseDeDatosDeberiaSerPostgreSQL() throws Exception {
+    void laBaseDeDatosDeberiaSerMySQL() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
             String nombreProducto = connection.getMetaData().getDatabaseProductName();
-            assertThat(nombreProducto).isEqualToIgnoringCase("PostgreSQL");
+            assertThat(nombreProducto).isEqualToIgnoringCase("MySQL");
         }
     }
 }
