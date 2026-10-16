@@ -29,6 +29,11 @@ public class PedidoDAOImpl implements PedidoDAO {
     }
 
     @Override
+    public List<Pedido> listarPendientes() {
+        return pedidoRepository.findByEstado_NombreIgnoreCaseOrderByFechaCreacionAsc("PENDIENTE");
+    }
+
+    @Override
     public Pedido buscarPorId(Long id) {
         return pedidoRepository.findById(id).orElse(null);
     }
