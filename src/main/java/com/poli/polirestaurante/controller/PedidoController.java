@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.poli.polirestaurante.dto.AlertaPedidoResponse;
+import com.poli.polirestaurante.dto.CancelacionPedidoRequest;
 import com.poli.polirestaurante.dto.PedidoResponse;
 import com.poli.polirestaurante.dto.PedidoUpdateRequest;
 import com.poli.polirestaurante.modelo.Pedido;
@@ -97,6 +98,19 @@ public class PedidoController {
     public ResponseEntity<?> entregar(@PathVariable Long id, @AuthenticationPrincipal UserDetails usuario) {
         try {
             Pedido pedido = pedidoService.entregar(id, usuario.getUsername());
+            return pedido == null ? ResponseEntity.notFound().build()
+                    : ResponseEntity.ok(PedidoResponse.desde(pedido));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PatchMapping("/{id}/cancelacion")
+    public ResponseEntity<?> cancelar(@PathVariable Long id,
+            @Valid @RequestBody CancelacionPedidoRequest datos,
+            @AuthenticationPrincipal UserDetails usuario) {
+        try {
+            Pedido pedido = pedidoService.cancelar(id, datos.motivo(), usuario.getUsername());
             return pedido == null ? ResponseEntity.notFound().build()
                     : ResponseEntity.ok(PedidoResponse.desde(pedido));
         } catch (IllegalArgumentException e) {

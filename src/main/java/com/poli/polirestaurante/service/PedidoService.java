@@ -24,6 +24,7 @@ public class PedidoService {
     private static final String EN_PREPARACION = "EN PREPARACION";
     private static final String LISTO = "LISTO";
     private static final String ENTREGADO = "ENTREGADO";
+    private static final String CANCELADO = "CANCELADO";
     public static final int MAXIMO_RECORDATORIOS = 3;
     public static final long INTERVALO_RECORDATORIO_MS = 60_000;
 
@@ -65,6 +66,7 @@ public class PedidoService {
         if (pedido == null) {
             return null;
         }
+        validarNoCancelado(pedido);
         if (meseroId != null) {
             Mesero mesero = meseroDAO.buscarPorId(meseroId);
             if (mesero == null) {
@@ -159,6 +161,32 @@ public class PedidoService {
         return cambiarEstado(id, nombreEstado);
     }
 
+    public Pedido cancelar(Long id, String motivo, String correoMesero) {
+        Pedido pedido = pedidoDAO.buscarPorId(id);
+        if (pedido == null) {
+            return null;
+        }
+        validarMeseroResponsable(pedido, correoMesero);
+        if (motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException("El motivo de cancelación es obligatorio.");
+        }
+        String motivoNormalizado = motivo.trim();
+        if (motivoNormalizado.length() > 255) {
+            throw new IllegalArgumentException("El motivo de cancelación no puede superar 255 caracteres.");
+        }
+        String estadoActual = normalizar(pedido.getEstado().getNombre());
+        if (ENTREGADO.equals(estadoActual) || CANCELADO.equals(estadoActual)) {
+            throw new IllegalArgumentException("No se puede cancelar un pedido entregado o ya cancelado.");
+        }
+
+        pedido.setEstado(buscarEstado(CANCELADO));
+        pedido.setMotivoCancelacion(motivoNormalizado);
+        pedido.setFechaUltimaActualizacion(LocalDateTime.now());
+        pedido.setAlertaRecibida(true);
+        pedido.setFechaProximoRecordatorio(null);
+        return pedidoDAO.actualizar(pedido);
+    }
+
     public Pedido entregar(Long id, String correoMesero) {
         Pedido pedido = pedidoDAO.buscarPorId(id);
         if (pedido == null) {
@@ -180,6 +208,12 @@ public class PedidoService {
     private void validarMeseroResponsable(Pedido pedido, String correoMesero) {
         if (pedido.getMesero() == null || !pedido.getMesero().getCorreo().equalsIgnoreCase(correoMesero)) {
             throw new IllegalArgumentException("El pedido no pertenece al mesero autenticado.");
+        }
+    }
+
+    private void validarNoCancelado(Pedido pedido) {
+        if (CANCELADO.equals(normalizar(pedido.getEstado().getNombre()))) {
+            throw new IllegalArgumentException("No se puede modificar un pedido cancelado.");
         }
     }
 

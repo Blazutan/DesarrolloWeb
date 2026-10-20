@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +49,7 @@ class PedidoServiceTest {
     private EstadoPedido enPreparacion;
     private EstadoPedido listo;
     private EstadoPedido entregado;
+    private EstadoPedido cancelado;
 
     @BeforeEach
     void setUp() {
@@ -57,10 +59,11 @@ class PedidoServiceTest {
         enPreparacion = new EstadoPedido("EN PREPARACIÓN");
         listo = new EstadoPedido("LISTO");
         entregado = new EstadoPedido("ENTREGADO");
+        cancelado = new EstadoPedido("CANCELADO");
     }
 
     private void configurarEstados() {
-        when(estadoPedidoDAO.listar()).thenReturn(List.of(pendiente, enPreparacion, listo, entregado));
+        when(estadoPedidoDAO.listar()).thenReturn(List.of(pendiente, enPreparacion, listo, entregado, cancelado));
     }
 
     @Test
@@ -116,6 +119,88 @@ class PedidoServiceTest {
 
         assertThatThrownBy(() -> pedidoService.cambiarEstado(10L, "LISTO"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void cancelar_pedidoPendienteGuardaEstadoMotivoYFechaDeActualizacion() {
+        configurarEstados();
+        Pedido pedido = new Pedido(mesero, pendiente);
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+        when(pedidoDAO.actualizar(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+
+        Pedido resultado = pedidoService.cancelar(10L, "  Cliente desistió  ", mesero.getCorreo());
+
+        assertThat(resultado.getEstado()).isSameAs(cancelado);
+        assertThat(resultado.getMotivoCancelacion()).isEqualTo("Cliente desistió");
+        assertThat(resultado.getFechaUltimaActualizacion()).isNotNull();
+        assertThat(resultado.isAlertaRecibida()).isTrue();
+        assertThat(resultado.getFechaProximoRecordatorio()).isNull();
+        verify(pedidoDAO).actualizar(pedido);
+    }
+
+    @Test
+    void cancelar_permitePedidoListo() {
+        configurarEstados();
+        Pedido pedido = new Pedido(mesero, listo);
+        pedido.setFechaProximoRecordatorio(LocalDateTime.now().plusMinutes(1));
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+        when(pedidoDAO.actualizar(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+
+        Pedido resultado = pedidoService.cancelar(10L, "El cliente desistió", mesero.getCorreo());
+
+        assertThat(resultado.getEstado()).isSameAs(cancelado);
+        assertThat(resultado.getMotivoCancelacion()).isEqualTo("El cliente desistió");
+        assertThat(resultado.getFechaProximoRecordatorio()).isNull();
+    }
+
+    @Test
+    void cancelar_permitePedidoEnPreparacion() {
+        configurarEstados();
+        Pedido pedido = new Pedido(mesero, enPreparacion);
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+        when(pedidoDAO.actualizar(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+
+        Pedido resultado = pedidoService.cancelar(10L, "El cliente desistió", mesero.getCorreo());
+
+        assertThat(resultado.getEstado()).isSameAs(cancelado);
+    }
+
+    @Test
+    void cancelar_rechazaPedidoDeOtroMeseroOPedidoEntregado() {
+        Pedido pedidoPendiente = new Pedido(mesero, pendiente);
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedidoPendiente);
+        assertThatThrownBy(() -> pedidoService.cancelar(10L, "Cambio de opinión", "otro@restaurante.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("El pedido no pertenece al mesero autenticado.");
+
+        Pedido pedidoEntregado = new Pedido(mesero, entregado);
+        when(pedidoDAO.buscarPorId(11L)).thenReturn(pedidoEntregado);
+        assertThatThrownBy(() -> pedidoService.cancelar(11L, "Cambio de opinión", mesero.getCorreo()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No se puede cancelar un pedido entregado o ya cancelado.");
+
+        verify(pedidoDAO, never()).actualizar(any(Pedido.class));
+    }
+
+    @Test
+    void cancelar_rechazaCancelarUnPedidoDosVeces() {
+        Pedido pedido = new Pedido(mesero, cancelado);
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+
+        assertThatThrownBy(() -> pedidoService.cancelar(10L, "Otro motivo", mesero.getCorreo()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No se puede cancelar un pedido entregado o ya cancelado.");
+        verify(pedidoDAO, never()).actualizar(any(Pedido.class));
+    }
+
+    @Test
+    void cambiarEstado_rechazaPedidoCancelado() {
+        Pedido pedido = new Pedido(mesero, cancelado);
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+
+        assertThatThrownBy(() -> pedidoService.cambiarEstado(10L, "EN PREPARACIÓN"))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(pedidoDAO, never()).actualizar(any(Pedido.class));
     }
 
     @Test

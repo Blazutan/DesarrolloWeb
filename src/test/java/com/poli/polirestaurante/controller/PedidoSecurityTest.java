@@ -109,6 +109,25 @@ class PedidoSecurityTest {
 
     @Test
     @WithMockUser(roles = "MESERO")
+    void cancelacion_permiteMesero() throws Exception {
+        mockMvc.perform(patch("/api/pedidos/1/cancelacion").with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"El cliente desistió\"}"))
+                .andExpect(status().isNotFound());
+        verify(pedidoService).cancelar(1L, "El cliente desistió", "user");
+    }
+
+    @Test
+    @WithMockUser(roles = "COCINA")
+    void cancelacion_rechazaCocina() throws Exception {
+        mockMvc.perform(patch("/api/pedidos/1/cancelacion").with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"El cliente desistió\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "MESERO")
         void recibirAlerta_permiteMesero() throws Exception {
         mockMvc.perform(patch("/api/pedidos/1/recibido").with(csrf()))
                 .andExpect(status().isNotFound());

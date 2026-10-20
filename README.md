@@ -11,7 +11,7 @@ Backend REST para el sistema de pedidos de PoliRestaurante, desarrollado con Jav
 | **Relación de producto con precio (JC)** | Implementado | Cada producto tiene precio; al agregarlo al pedido se guarda el precio unitario en el detalle y se recalcula el total del pedido. |
 | **Asociación del pedido con el mesero (JV)** | Implementado | El pedido se asocia al mesero autenticado que lo crea. Las operaciones de recepción y entrega verifican que las realice ese mesero. |
 | **Alertas de pedido (JV)** | Implementado | El mesero consulta visualmente sus pedidos listos en `/alertas.html`. Se muestran hasta tres avisos, con intervalos de 60 segundos, hasta confirmar recepción o entregar el pedido. |
-| **Cancelación de pedido (JC)** | Pendiente | No hay una operación para cancelar pedidos ni para registrar y consultar el motivo. El campo `motivoCancelacion` del modelo, por sí solo, no implementa el requerimiento. La eliminación administrativa de un pedido tampoco equivale a cancelarlo. |
+| **Cancelación de pedido (JC)** | Implementado | El mesero responsable puede cancelar un pedido pendiente, en preparación o listo indicando un motivo. No se permite cancelar pedidos entregados o ya cancelados. |
 | **Visualización de cola de pedidos (JV)** | Implementado | Cocina consulta los pedidos pendientes ordenados del más antiguo al más reciente. |
 | **Cambio de estado del pedido (JC)** | Implementado | Cocina puede avanzar un pedido de pendiente a en preparación y de en preparación a listo. |
 | **Gestión de menú (JC)** | Implementado | El administrador puede crear, consultar, editar y eliminar productos, precios y categorías. |
@@ -38,6 +38,7 @@ La autenticación usa HTTP Basic con correo y contraseña.
 | `PATCH` | `/api/pedidos/{id}/entrega` | `MESERO` responsable | Registrar la entrega y su hora. |
 | `GET` | `/api/pedidos/alertas` | `MESERO` | Consultar pedidos listos sin acuse. |
 | `PATCH` | `/api/pedidos/{id}/recibido` | `MESERO` responsable | Confirmar una alerta y detener recordatorios. |
+| `PATCH` | `/api/pedidos/{id}/cancelacion` | `MESERO` responsable | Cancelar un pedido pendiente, en preparación o listo indicando el motivo en el cuerpo: `{"motivo":"..."}`. |
 | `GET` | `/api/pedidos` y `/api/pedidos/{id}` | `COCINA`, `ADMINISTRADOR` | Consultar pedidos. |
 | `PUT` | `/api/pedidos/{id}` | `ADMINISTRADOR` | Actualizar las asociaciones del pedido. |
 | `DELETE` | `/api/pedidos/{id}` | `ADMINISTRADOR` | Eliminar un pedido. |
@@ -66,6 +67,8 @@ La autenticación usa HTTP Basic con correo y contraseña.
 | `GET` | `/api/administracion/reportes/tiempos?desde=AAAA-MM-DD&hasta=AAAA-MM-DD` | `ADMINISTRADOR` | Consultar promedios de preparación, espera hasta entrega y tiempo total, en segundos. |
 
 La vista de alertas para meseros está disponible en `/alertas.html`; consulta el API cada cinco segundos y permite confirmar la recepción.
+
+El estado `CANCELADO` debe existir en la tabla `estado_pedido`. La cancelación actualiza `motivoCancelacion` y `fechaUltimaActualizacion` del pedido, sin eliminarlo ni añadir columnas.
 
 ## Pruebas
 

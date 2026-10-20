@@ -1,6 +1,7 @@
 package com.poli.polirestaurante.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -60,5 +61,18 @@ class DetallePedidoServiceTest {
         assertThat(detalle.getPrecioUnitario()).isEqualByComparingTo("3500");
         assertThat(detalle.calcularSubtotal()).isEqualByComparingTo("7000");
         assertThat(pedido.getPrecioTotal()).isEqualByComparingTo("7000");
+    }
+
+    @Test
+    void crear_rechazaAgregarDetallesAUnPedidoCancelado() {
+        Mesero mesero = new Mesero("Ana", "ana@restaurante.com", "hash");
+        Pedido pedido = new Pedido(mesero, new EstadoPedido("CANCELADO"));
+        pedido.setId(5L);
+        when(pedidoDAO.buscarPorId(5L)).thenReturn(pedido);
+
+        assertThatThrownBy(() -> detallePedidoService.crear(
+                new DetallePedidoRequest(5L, 8L, 1, null), "ana@restaurante.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No se pueden modificar los detalles de un pedido cancelado.");
     }
 }

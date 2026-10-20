@@ -50,6 +50,7 @@ public class DetallePedidoService {
         validar(datos);
         Pedido pedido = buscarPedido(datos.pedidoId());
         validarPropietario(pedido, correo);
+        validarNoCancelado(pedido);
         Producto producto = buscarProducto(datos.productoId());
         DetallePedido detalle = new DetallePedido(pedido, producto, datos.cantidad(), datos.notas());
         DetallePedido guardado = detallePedidoDAO.crear(detalle);
@@ -68,8 +69,10 @@ public class DetallePedidoService {
         }
         Pedido pedidoAnterior = detalle.getPedido();
         validarAcceso(pedidoAnterior, correo, puedeVerTodos);
+        validarNoCancelado(pedidoAnterior);
         Pedido pedidoNuevo = buscarPedido(datos.pedidoId());
         validarAcceso(pedidoNuevo, correo, puedeVerTodos);
+        validarNoCancelado(pedidoNuevo);
         Producto producto = buscarProducto(datos.productoId());
         detalle.setPedido(pedidoNuevo);
         detalle.setProducto(producto);
@@ -103,6 +106,7 @@ public class DetallePedidoService {
         }
         Pedido pedido = detalle.getPedido();
         validarAcceso(pedido, correo, puedeVerTodos);
+        validarNoCancelado(pedido);
         pedido.getDetalles().removeIf(item -> id.equals(item.getId()));
         detallePedidoDAO.eliminar(id);
         actualizarTotal(pedido);
@@ -154,5 +158,11 @@ public class DetallePedidoService {
 
     private boolean perteneceAMesero(Pedido pedido, String correo) {
         return pedido.getMesero() != null && pedido.getMesero().getCorreo().equalsIgnoreCase(correo);
+    }
+
+    private void validarNoCancelado(Pedido pedido) {
+        if ("CANCELADO".equalsIgnoreCase(pedido.getEstado().getNombre().trim())) {
+            throw new IllegalArgumentException("No se pueden modificar los detalles de un pedido cancelado.");
+        }
     }
 }
