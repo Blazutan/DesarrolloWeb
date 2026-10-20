@@ -26,6 +26,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.PATCH, "/api/pedidos/*/estado").hasRole("COCINA")
                     .requestMatchers(HttpMethod.PATCH, "/api/pedidos/*/entrega").hasRole("MESERO")
                     .requestMatchers(HttpMethod.PATCH, "/api/pedidos/*/recibido").hasRole("MESERO")
+                    .requestMatchers(HttpMethod.PATCH, "/api/pedidos/*/cancelacion").hasRole("MESERO")
                     .requestMatchers("/api/administracion/**").hasRole("ADMINISTRADOR")
                     .requestMatchers(HttpMethod.GET, "/api/estados-pedido", "/api/estados-pedido/**")
                     .hasAnyRole("COCINA", "ADMINISTRADOR")

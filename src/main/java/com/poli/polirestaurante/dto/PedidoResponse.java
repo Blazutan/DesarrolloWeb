@@ -15,12 +15,13 @@ public record PedidoResponse(
         LocalDateTime fechaEntregado,
         java.math.BigDecimal precioTotal,
         int numeroRecordatorios,
-        boolean alertaRecibida) {
+        boolean alertaRecibida,
+        String motivoCancelacion) {
 
     public static PedidoResponse desde(Pedido pedido) {
         return new PedidoResponse(pedido.getId(), pedido.getMesero().getId(), pedido.getEstado().getNombre(),
             pedido.getFechaCreacion(), pedido.getFechaUltimaActualizacion(), pedido.getFechaEnPreparacion(),
             pedido.getFechaListo(), pedido.getFechaEntregado(), pedido.getPrecioTotal(),
-            pedido.getNumeroRecordatorios(), pedido.isAlertaRecibida());
+            pedido.getNumeroRecordatorios(), pedido.isAlertaRecibida(), pedido.getMotivoCancelacion());
     }
 }

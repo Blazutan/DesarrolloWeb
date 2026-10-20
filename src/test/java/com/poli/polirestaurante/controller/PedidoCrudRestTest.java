@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -65,5 +66,32 @@ class PedidoCrudRestTest {
                 .andExpect(status().isOk());
         mockMvc.perform(delete("/api/pedidos/5").with(csrf()))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "ana@restaurante.com", roles = "MESERO")
+    void cancelacion_devuelveElMotivoPersistido() throws Exception {
+        Mesero mesero = new Mesero("Ana", "ana@restaurante.com", "hash");
+        mesero.setId(3L);
+        Pedido pedido = new Pedido(mesero, new EstadoPedido("CANCELADO"));
+        pedido.setId(5L);
+        pedido.setMotivoCancelacion("El cliente desistió");
+        when(pedidoService.cancelar(5L, "El cliente desistió", "ana@restaurante.com")).thenReturn(pedido);
+
+        mockMvc.perform(patch("/api/pedidos/5/cancelacion").with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"El cliente desistió\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("CANCELADO"))
+                .andExpect(jsonPath("$.motivoCancelacion").value("El cliente desistió"));
+    }
+
+    @Test
+    @WithMockUser(username = "ana@restaurante.com", roles = "MESERO")
+    void cancelacion_rechazaMotivoVacio() throws Exception {
+        mockMvc.perform(patch("/api/pedidos/5/cancelacion").with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"  \"}"))
+                .andExpect(status().isBadRequest());
     }
 }
