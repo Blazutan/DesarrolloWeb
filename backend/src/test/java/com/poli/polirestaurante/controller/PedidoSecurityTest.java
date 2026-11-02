@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.poli.polirestaurante.security.SecurityConfig;
 import com.poli.polirestaurante.dto.MesaResponse;
+import com.poli.polirestaurante.dto.PedidoRequest;
 import com.poli.polirestaurante.dto.UsuarioRequest;
 import com.poli.polirestaurante.dto.UsuarioResponse;
 import com.poli.polirestaurante.service.AdministracionService;
@@ -80,15 +81,21 @@ class PedidoSecurityTest {
     @Test
     @WithMockUser(roles = "MESERO")
     void crear_permiteMesero() throws Exception {
-        mockMvc.perform(post("/api/pedidos").with(csrf()))
+        when(pedidoService.crear(eq("user"), any(PedidoRequest.class))).thenReturn(null);
+
+        mockMvc.perform(post("/api/pedidos").with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"mesaId\":1,\"detalles\":[{\"productoId\":1,\"cantidad\":1}]}"))
                 .andExpect(status().isNotFound());
-        verify(pedidoService).crear("user");
+        verify(pedidoService).crear(eq("user"), any(PedidoRequest.class));
     }
 
     @Test
     @WithMockUser(roles = "COCINA")
     void crear_rechazaCocina() throws Exception {
-        mockMvc.perform(post("/api/pedidos").with(csrf()))
+        mockMvc.perform(post("/api/pedidos").with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"mesaId\":1,\"detalles\":[{\"productoId\":1,\"cantidad\":1}]}"))
                 .andExpect(status().isForbidden());
     }
 

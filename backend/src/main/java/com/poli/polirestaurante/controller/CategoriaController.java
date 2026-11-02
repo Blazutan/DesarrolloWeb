@@ -2,6 +2,7 @@ package com.poli.polirestaurante.controller;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,7 +28,7 @@ public class CategoriaController {
     }
 
     @PostMapping
-    public ResponseEntity<Categoria> crear(@RequestBody Categoria categoria) {
+    public ResponseEntity<Categoria> crear(@Valid @RequestBody Categoria categoria) {
         return ResponseEntity.status(HttpStatus.CREATED).body(categoriaService.crear(categoria));
     }
 
@@ -43,7 +44,7 @@ public class CategoriaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Categoria> actualizar(@PathVariable Long id, @RequestBody Categoria datos) {
+    public ResponseEntity<Categoria> actualizar(@PathVariable Long id, @Valid @RequestBody Categoria datos) {
         Categoria actualizada = categoriaService.actualizar(id, datos);
         return actualizada == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(actualizada);
     }

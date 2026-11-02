@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.poli.polirestaurante.dto.AlertaPedidoResponse;
 import com.poli.polirestaurante.dto.CancelacionPedidoRequest;
 import com.poli.polirestaurante.dto.PedidoResponse;
+import com.poli.polirestaurante.dto.PedidoRequest;
 import com.poli.polirestaurante.dto.PedidoUpdateRequest;
 import com.poli.polirestaurante.modelo.Pedido;
 import com.poli.polirestaurante.service.PedidoService;
@@ -37,10 +38,17 @@ public class PedidoController {
     }
 
     @PostMapping
-    public ResponseEntity<PedidoResponse> crear(@AuthenticationPrincipal UserDetails usuario) {
-        Pedido pedido = pedidoService.crear(usuario.getUsername());
+    public ResponseEntity<PedidoResponse> crear(@Valid @RequestBody PedidoRequest datos,
+            @AuthenticationPrincipal UserDetails usuario) {
+        Pedido pedido = pedidoService.crear(usuario.getUsername(), datos);
         return pedido == null ? ResponseEntity.notFound().build()
                 : ResponseEntity.status(HttpStatus.CREATED).body(PedidoResponse.desde(pedido));
+    }
+
+    @GetMapping("/mis-pedidos")
+    public List<PedidoResponse> listarMisPedidos(@AuthenticationPrincipal UserDetails usuario) {
+        return pedidoService.listarPorMesero(usuario.getUsername()).stream()
+                .map(PedidoResponse::desde).toList();
     }
 
     @GetMapping

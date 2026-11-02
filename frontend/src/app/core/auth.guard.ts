@@ -9,9 +9,10 @@ export const authGuard: CanActivateFn = (_route, state) => {
 
 export const roleGuard = (...roles: AppRole[]): CanActivateFn => () => {
   const auth = inject(AuthService);
-  return auth.isAuthenticated() && roles.includes(auth.role() as AppRole)
+  const role = auth.role();
+  return auth.isAuthenticated() && role !== null && roles.includes(role)
     ? true
-    : inject(Router).createUrlTree([auth.isAuthenticated() ? defaultRoute(auth.role()) : '/login']);
+    : inject(Router).createUrlTree([auth.isAuthenticated() ? defaultRoute(role) : '/login']);
 };
 
 export function defaultRoute(role: AppRole | null): string {

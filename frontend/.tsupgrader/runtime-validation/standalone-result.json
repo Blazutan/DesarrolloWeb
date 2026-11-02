@@ -1,0 +1,18 @@
+{
+  "planHash": "1f5006cfb981f592e38fcf657061e5124e80653022b7cc569b6270e7fa07eedb",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-11-02T16:43:03.9376631Z",
+  "retryCount": 0,
+  "resetBaseline": false,
+  "complete": false,
+  "runningStep": "setup[0]:C:\\Users\\USER\\.copilot\\session-state\\f372e358-5527-4a9d-9c12-e5a054e5e98d\\files\\runtime\\node-v22.14.0-win-x64\\node.exe",
+  "partialOutput": "npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.\r\nnpm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported\r\nnpm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me\r\nnpm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me\r\nnpm warn deprecated @angular/animations@20.3.34: @angular/animations is deprecated. Use \u0060animate.enter\u0060 and \u0060animate.leave\u0060 instead. For more information see: https://v22.angular.dev/guide/animations.\r\n",
+  "cleanupCompleted": false,
+  "result": {
+    "setupSucceeded": false,
+    "setupDurationMs": 0,
+    "setupFailureOutput": null,
+    "assertions": [],
+    "executions": []
+  }
+}

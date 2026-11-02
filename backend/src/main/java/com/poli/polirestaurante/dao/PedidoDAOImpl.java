@@ -42,6 +42,11 @@ public class PedidoDAOImpl implements PedidoDAO {
     }
 
     @Override
+    public List<Pedido> listarPorMesero(String correoMesero) {
+        return pedidoRepository.findByMesero_CorreoIgnoreCaseOrderByFechaCreacionDesc(correoMesero);
+    }
+
+    @Override
     public List<Pedido> listarRecordatoriosVencidos(LocalDateTime ahora, int maximoRecordatorios) {
         return pedidoRepository
                 .findByEstado_NombreIgnoreCaseAndAlertaRecibidaFalseAndNumeroRecordatoriosLessThanAndFechaProximoRecordatorioLessThanEqual(

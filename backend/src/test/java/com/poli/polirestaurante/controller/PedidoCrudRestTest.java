@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.poli.polirestaurante.modelo.EstadoPedido;
 import com.poli.polirestaurante.modelo.Mesero;
+import com.poli.polirestaurante.modelo.Mesa;
 import com.poli.polirestaurante.modelo.Pedido;
 import com.poli.polirestaurante.security.SecurityConfig;
 import com.poli.polirestaurante.service.PedidoService;
@@ -93,5 +94,34 @@ class PedidoCrudRestTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"motivo\":\"  \"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "ana@restaurante.com", roles = "MESERO")
+    void crearPedido_rechazaUnPedidoSinProductos() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/pedidos")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"mesaId\":1,\"detalles\":[]}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "ana@restaurante.com", roles = "MESERO")
+    void meseroSoloConsultaSusPedidosActivos() throws Exception {
+        Mesero mesero = new Mesero("Ana", "ana@restaurante.com", "hash");
+        mesero.setId(3L);
+        Pedido pedido = new Pedido(mesero, new EstadoPedido("PENDIENTE"));
+        pedido.setId(5L);
+        Mesa mesa = new Mesa(4, "OCUPADA");
+        mesa.setId(2L);
+        mesa.setPedido(pedido);
+        pedido.getMesas().add(mesa);
+        when(pedidoService.listarPorMesero("ana@restaurante.com")).thenReturn(List.of(pedido));
+
+        mockMvc.perform(get("/api/pedidos/mis-pedidos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].mesaId").value(2))
+                .andExpect(jsonPath("$[0].mesaNumero").value(4));
     }
 }

@@ -72,7 +72,7 @@ class AdministracionServiceTest {
         });
 
         var resultado = administracionService.crearUsuario("mesero",
-                new UsuarioRequest("Ana Ruiz", "ANA@RESTAURANTE.COM", "secreto"));
+                new UsuarioRequest("Ana Ruiz", "ANA@RESTAURANTE.COM", "secreto1"));
 
         assertThat(resultado.id()).isEqualTo(8L);
         assertThat(resultado.correo()).isEqualTo("ana@restaurante.com");
@@ -86,7 +86,7 @@ class AdministracionServiceTest {
         when(administradorDAO.listar()).thenReturn(List.of());
 
         assertThatThrownBy(() -> administracionService.crearUsuario("COCINA",
-                new UsuarioRequest("Ana", "ana@restaurante.com", "secreto")))
+                new UsuarioRequest("Ana", "ana@restaurante.com", "secreto1")))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }
