@@ -1,77 +1,46 @@
-# PoliRestaurante
+﻿# PoliRestaurante
 
-Backend REST para el sistema de pedidos de PoliRestaurante, desarrollado con Java 21, Spring Boot, Spring Data JPA y MySQL.
+Sistema de pedidos con API Spring Boot y cliente Angular + PrimeNG.
 
-## Requerimientos y estado de implementación
+## Estructura
 
-| Requerimiento | Estado | Implementación |
-|---|---|---|
-| **Validación de usuario** | Implementado | La API autentica con correo y contraseña mediante HTTP Basic y restringe las operaciones según el rol (`MESERO`, `COCINA` o `ADMINISTRADOR`). |
-| **Guardado de tiempos (JV)** | Implementado | Se registran las fechas de creación, inicio de preparación, pedido listo y entrega. Los reportes calculan los tiempos desde preparación hasta listo, desde listo hasta entrega y el total de preparación a entrega. |
-| **Relación de producto con precio (JC)** | Implementado | Cada producto tiene precio; al agregarlo al pedido se guarda el precio unitario en el detalle y se recalcula el total del pedido. |
-| **Asociación del pedido con el mesero (JV)** | Implementado | El pedido se asocia al mesero autenticado que lo crea. Las operaciones de recepción y entrega verifican que las realice ese mesero. |
-| **Alertas de pedido (JV)** | Implementado | El mesero consulta visualmente sus pedidos listos en `/alertas.html`. Se muestran hasta tres avisos, con intervalos de 60 segundos, hasta confirmar recepción o entregar el pedido. |
-| **Cancelación de pedido (JC)** | Implementado | El mesero responsable puede cancelar un pedido pendiente, en preparación o listo indicando un motivo. No se permite cancelar pedidos entregados o ya cancelados. |
-| **Visualización de cola de pedidos (JV)** | Implementado | Cocina consulta los pedidos pendientes ordenados del más antiguo al más reciente. |
-| **Cambio de estado del pedido (JC)** | Implementado | Cocina puede avanzar un pedido de pendiente a en preparación y de en preparación a listo. |
-| **Gestión de menú (JC)** | Implementado | El administrador puede crear, consultar, editar y eliminar productos, precios y categorías. |
-| **Gestión de mesas y usuarios (JV)** | Implementado | El administrador puede gestionar mesas y su estado, y crear, consultar, actualizar o eliminar cuentas de usuario. |
-| **Reportes de ventas y tiempos (JC)** | Implementado | El administrador puede consultar ventas y tiempos de pedidos entregados para un periodo. |
+- `backend/`: API REST Java 21 / Spring Boot, acceso a MySQL, Swagger/OpenAPI y pruebas del servidor.
+- `frontend/`: interfaz Angular, rutas `/menu` y `/pedidos`, pruebas unitarias y proxy local a la API.
 
-## Configuración
+## Configuración y ejecución
 
-Se necesita Java 21 y MySQL. Configura `DB_URL`, `DB_USERNAME` y `DB_PASSWORD`. `DB_URL` debe ser una URL JDBC, por ejemplo `jdbc:mysql://localhost:3306/polirestaurante`.
+La conexión MySQL se configura en `backend/.env` con `DB_URL`, `DB_USERNAME` y `DB_PASSWORD`. Mantén ese archivo privado y fuera de Git. El backend no crea automáticamente un administrador desde las variables `ADMIN_*`; las cuentas deben existir en la base de datos. Para usar el flujo del cliente se necesita una cuenta con rol `MESERO`.
 
-Las contraseñas nuevas se almacenan con BCrypt. Las cuentas preexistentes con contraseñas en texto plano deben migrarse a BCrypt antes de iniciar sesión.
+Terminal 1, API:
 
-La autenticación no tiene una ruta de inicio de sesión independiente: envía el correo y la contraseña mediante HTTP Basic en cada solicitud protegida.
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run
+```
 
-## API
+Terminal 2, cliente:
 
-La autenticación usa HTTP Basic con correo y contraseña.
+```powershell
+cd frontend
+npm install
+npm start
+```
 
-| Método | Ruta | Rol | Función |
-|---|---|---|---|
-| `POST` | `/api/pedidos` | `MESERO` | Crear un pedido ligado al mesero autenticado. |
-| `GET` | `/api/pedidos/cola/cocina` | `COCINA` | Consultar pendientes ordenados por fecha. |
-| `PATCH` | `/api/pedidos/{id}/estado?estado=EN PREPARACIÓN` | `COCINA` | Registrar preparación o estado listo y sus tiempos. |
-| `PATCH` | `/api/pedidos/{id}/entrega` | `MESERO` responsable | Registrar la entrega y su hora. |
-| `GET` | `/api/pedidos/alertas` | `MESERO` | Consultar pedidos listos sin acuse. |
-| `PATCH` | `/api/pedidos/{id}/recibido` | `MESERO` responsable | Confirmar una alerta y detener recordatorios. |
-| `PATCH` | `/api/pedidos/{id}/cancelacion` | `MESERO` responsable | Cancelar un pedido pendiente, en preparación o listo indicando el motivo en el cuerpo: `{"motivo":"..."}`. |
-| `GET` | `/api/pedidos` y `/api/pedidos/{id}` | `COCINA`, `ADMINISTRADOR` | Consultar pedidos. |
-| `PUT` | `/api/pedidos/{id}` | `ADMINISTRADOR` | Actualizar las asociaciones del pedido. |
-| `DELETE` | `/api/pedidos/{id}` | `ADMINISTRADOR` | Eliminar un pedido. |
-| `GET` | `/api/categorias` y `/api/categorias/{id}` | `MESERO`, `COCINA`, `ADMINISTRADOR` | Consultar categorías. |
-| `POST` | `/api/categorias` | `ADMINISTRADOR` | Crear categoría. |
-| `PUT`, `DELETE` | `/api/categorias/{id}` | `ADMINISTRADOR` | Actualizar o eliminar categoría. |
-| `GET` | `/api/productos` y `/api/productos/{id}` | `MESERO`, `COCINA`, `ADMINISTRADOR` | Consultar menú, categoría y precio. |
-| `POST` | `/api/productos` | `ADMINISTRADOR` | Crear producto con categoría y precio. |
-| `PUT`, `DELETE` | `/api/productos/{id}` | `ADMINISTRADOR` | Actualizar o eliminar producto. |
-| `GET` | `/api/detalles-pedido` y `/api/detalles-pedido/{id}` | `MESERO`, `COCINA`, `ADMINISTRADOR` | Consultar detalles; el mesero solo accede a sus pedidos. |
-| `POST` | `/api/detalles-pedido` | `MESERO` responsable | Agregar detalle y congelar precio unitario. |
-| `PUT`, `DELETE` | `/api/detalles-pedido/{id}` | `MESERO` responsable, `ADMINISTRADOR` | Actualizar o eliminar detalle y recalcular total. |
-| `GET` | `/api/estados-pedido` y `/api/estados-pedido/{id}` | `COCINA`, `ADMINISTRADOR` | Consultar estados. |
-| `POST` | `/api/estados-pedido` | `ADMINISTRADOR` | Crear estado. |
-| `PUT`, `DELETE` | `/api/estados-pedido/{id}` | `ADMINISTRADOR` | Actualizar o eliminar estado. |
-| `GET` | `/api/administracion/mesas` y `/api/administracion/mesas/{id}` | `ADMINISTRADOR` | Consultar mesas. |
-| `POST` | `/api/administracion/mesas` | `ADMINISTRADOR` | Crear mesa. |
-| `PUT`, `DELETE` | `/api/administracion/mesas/{id}` | `ADMINISTRADOR` | Actualizar o eliminar mesa. |
-| `PATCH` | `/api/administracion/mesas/{id}/estado?estado=OCUPADA` | `ADMINISTRADOR` | Cambiar una mesa entre `LIBRE` y `OCUPADA`. |
-| `GET` | `/api/administracion/usuarios` | `ADMINISTRADOR` | Consultar cuentas sin exponer contraseñas. |
-| `GET` | `/api/administracion/usuarios/{rol}/{id}` | `ADMINISTRADOR` | Consultar cuenta por rol e identificador. |
-| `POST` | `/api/administracion/usuarios/{rol}` | `ADMINISTRADOR` | Crear cuenta `MESERO`, `COCINA` o `ADMINISTRADOR`. |
-| `PUT` | `/api/administracion/usuarios/{rol}/{id}` | `ADMINISTRADOR` | Actualizar una cuenta; la contraseña es opcional. |
-| `DELETE` | `/api/administracion/usuarios/{rol}/{id}` | `ADMINISTRADOR` | Eliminar una cuenta. |
-| `GET` | `/api/administracion/reportes/ventas?desde=AAAA-MM-DD&hasta=AAAA-MM-DD` | `ADMINISTRADOR` | Consultar ventas, ticket promedio y productos vendidos durante el periodo indicado. |
-| `GET` | `/api/administracion/reportes/tiempos?desde=AAAA-MM-DD&hasta=AAAA-MM-DD` | `ADMINISTRADOR` | Consultar promedios de preparación, espera hasta entrega y tiempo total, en segundos. |
-
-La vista de alertas para meseros está disponible en `/alertas.html`; consulta el API cada cinco segundos y permite confirmar la recepción.
-
-El estado `CANCELADO` debe existir en la tabla `estado_pedido`. La cancelación actualiza `motivoCancelacion` y `fechaUltimaActualizacion` del pedido, sin eliminarlo ni añadir columnas.
+Abre `http://localhost:4200`. El proxy de desarrollo envía `/api` al backend en `http://localhost:8080`.
 
 ## Pruebas
 
-```bash
-./mvnw test
+```powershell
+cd frontend
+npm test
+npm run build
 ```
+
+```powershell
+cd backend
+.\mvnw.cmd test
+```
+
+## Swagger
+
+Con el backend activo, abre `http://localhost:8080/swagger-ui/index.html`. Autoriza con HTTP Basic y usa una cuenta con el rol apropiado para cada operación. Detalles en [backend/README.md](backend/README.md) y [frontend/README.md](frontend/README.md).

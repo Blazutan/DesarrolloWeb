@@ -16,6 +16,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/pedidos").hasRole("MESERO")
                     .requestMatchers(HttpMethod.GET, "/api/pedidos/cola/cocina").hasRole("COCINA")
                     .requestMatchers(HttpMethod.GET, "/api/pedidos/alertas").hasRole("MESERO")
