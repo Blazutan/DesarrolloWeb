@@ -1,8 +1,9 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { AuthService } from './auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  const raw = sessionStorage.getItem('poli-auth');
-  if (!raw || !request.url.startsWith('/api/')) return next(request);
-  const { usuario, clave } = JSON.parse(raw) as { usuario: string; clave: string };
-  return next(request.clone({ setHeaders: { Authorization: `Basic ${btoa(`${usuario}:${clave}`)}` } }));
+  const authorization = inject(AuthService).authorizationHeader();
+  if (!authorization || !request.url.startsWith('/api/') || request.headers.has('Authorization')) return next(request);
+  return next(request.clone({ setHeaders: { Authorization: authorization } }));
 };

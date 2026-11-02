@@ -15,7 +15,7 @@ describe('MenuComponent', () => {
   };
 
   beforeEach(() => {
-    sessionStorage.setItem('poli-auth', JSON.stringify({ usuario: 'mesero@test.com', clave: 'secreto' }));
+    sessionStorage.setItem('poli-auth', JSON.stringify({ usuario: 'mesero@test.com', clave: 'secreto', rol: 'MESERO' }));
     api.categorias.calls.reset();
     api.productos.calls.reset();
     api.crearPedido.calls.reset();
