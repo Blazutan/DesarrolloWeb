@@ -19,12 +19,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.poli.polirestaurante.dao.EstadoPedidoDAO;
+import com.poli.polirestaurante.dao.DetallePedidoDAO;
 import com.poli.polirestaurante.dao.CocinaDAO;
+import com.poli.polirestaurante.dao.MesaDAO;
 import com.poli.polirestaurante.dao.MeseroDAO;
 import com.poli.polirestaurante.dao.PedidoDAO;
+import com.poli.polirestaurante.dao.ProductoDAO;
+import com.poli.polirestaurante.dto.PedidoItemRequest;
+import com.poli.polirestaurante.dto.PedidoRequest;
 import com.poli.polirestaurante.modelo.EstadoPedido;
+import com.poli.polirestaurante.modelo.Mesa;
 import com.poli.polirestaurante.modelo.Mesero;
 import com.poli.polirestaurante.modelo.Pedido;
+import com.poli.polirestaurante.modelo.Producto;
+import com.poli.polirestaurante.modelo.Categoria;
 
 @ExtendWith(MockitoExtension.class)
 class PedidoServiceTest {
@@ -40,6 +48,15 @@ class PedidoServiceTest {
 
     @Mock
     private EstadoPedidoDAO estadoPedidoDAO;
+
+    @Mock
+    private MesaDAO mesaDAO;
+
+    @Mock
+    private ProductoDAO productoDAO;
+
+    @Mock
+    private DetallePedidoDAO detallePedidoDAO;
 
     @InjectMocks
     private PedidoService pedidoService;
@@ -67,16 +84,37 @@ class PedidoServiceTest {
     }
 
     @Test
-    void crear_asociaElMeseroYDejaElPedidoPendienteConFechaDeCreacion() {
+    void crear_asociaMesaMeseroYProductosAlPedidoPendiente() {
         configurarEstados();
+        Mesa mesa = new Mesa(4, "LIBRE");
+        mesa.setId(2L);
+        Producto producto = new Producto("Sopa", "Del día", java.math.BigDecimal.valueOf(12000),
+                true, new Categoria("Platos"));
+        producto.setId(3L);
+        when(mesaDAO.buscarPorId(2L)).thenReturn(mesa);
         when(meseroDAO.buscarPorCorreo(mesero.getCorreo())).thenReturn(mesero);
         when(pedidoDAO.crear(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+        when(productoDAO.buscarPorId(3L)).thenReturn(producto);
+        when(detallePedidoDAO.crear(any())).thenAnswer(invocacion -> invocacion.getArgument(0));
+        when(pedidoDAO.actualizar(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
 
-        Pedido resultado = pedidoService.crear(mesero.getCorreo());
+        Pedido resultado = pedidoService.crear(mesero.getCorreo(),
+                new PedidoRequest(2L, List.of(new PedidoItemRequest(3L, 2, "sin sal"))));
 
         assertThat(resultado.getMesero()).isSameAs(mesero);
         assertThat(resultado.getEstado()).isSameAs(pendiente);
         assertThat(resultado.getFechaCreacion()).isNotNull();
+        assertThat(resultado.getDetalles()).hasSize(1);
+        assertThat(resultado.getPrecioTotal()).isEqualByComparingTo("24000");
+        assertThat(mesa.getEstado()).isEqualTo("OCUPADA");
+        assertThat(mesa.getPedido()).isSameAs(resultado);
+    }
+
+    @Test
+    void crear_rechazaPedidoSinProductosAntesDePersistir() {
+        assertThatThrownBy(() -> pedidoService.crear(mesero.getCorreo(), new PedidoRequest(2L, List.of())))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(pedidoDAO, never()).crear(any(Pedido.class));
     }
 
     @Test

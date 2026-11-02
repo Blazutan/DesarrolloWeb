@@ -6,6 +6,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "estado_pedido")
@@ -16,6 +18,8 @@ public class EstadoPedido {
     private Long id;
 
     @Column(nullable = false)
+    @NotBlank
+    @Size(max = 40)
     private String nombre;
 
     public EstadoPedido() {

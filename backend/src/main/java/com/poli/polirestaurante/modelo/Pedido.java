@@ -51,6 +51,9 @@ public class Pedido {
     @OneToMany(mappedBy = "pedido")
     private List<DetallePedido> detalles = new ArrayList<>();
 
+    @OneToMany(mappedBy = "pedido")
+    private List<Mesa> mesas = new ArrayList<>();
+
     public Pedido() {
     }
     public Pedido(Mesero mesero, EstadoPedido estado) {
@@ -174,6 +177,10 @@ public class Pedido {
 
     public List<DetallePedido> getDetalles() {
         return detalles;
+    }
+
+    public List<Mesa> getMesas() {
+        return mesas;
     }
 
     public void agregarDetalle(DetallePedido detalle) {

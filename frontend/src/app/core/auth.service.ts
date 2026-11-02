@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { catchError, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 
 export type AppRole = 'MESERO' | 'COCINA' | 'ADMINISTRADOR';
 
@@ -10,12 +10,6 @@ export interface AuthCredentials {
 }
 
 const STORAGE_KEY = 'poli-auth';
-const ROLE_PROBES: Record<AppRole, string> = {
-  MESERO: '/api/pedidos/alertas',
-  COCINA: '/api/pedidos/cola/cocina',
-  ADMINISTRADOR: '/api/administracion/mesas'
-};
-
 interface StoredAuth extends AuthCredentials { rol: AppRole; }
 
 export function encodeBasicCredentials(credentials: AuthCredentials): string {
@@ -34,17 +28,12 @@ export class AuthService {
 
   login(credentials: AuthCredentials): Observable<AppRole> {
     const headers = new HttpHeaders({ Authorization: encodeBasicCredentials(credentials) });
-    return this.http.get<unknown[]>('/api/categorias', { headers }).pipe(
-      switchMap(() => forkJoin(Object.entries(ROLE_PROBES).map(([rol, url]) =>
-        this.http.get<unknown>(url, { headers }).pipe(
-          map(() => rol as AppRole),
-          catchError((_error: HttpErrorResponse) => of(null))
-        )
-      ))),
-      map(roles => {
-        const role = roles.find((value): value is AppRole => value !== null);
-        if (!role) throw new HttpErrorResponse({ status: 403, statusText: 'Forbidden', error: 'Rol no reconocido' });
-        return role;
+    return this.http.get<{ correo: string; rol: string }>('/api/auth/me', { headers }).pipe(
+      map(profile => {
+        if (!['MESERO', 'COCINA', 'ADMINISTRADOR'].includes(profile.rol)) {
+          throw new HttpErrorResponse({ status: 403, statusText: 'Forbidden', error: 'Rol no reconocido' });
+        }
+        return profile.rol as AppRole;
       }),
       tap(rol => {
         const auth = { ...credentials, rol };

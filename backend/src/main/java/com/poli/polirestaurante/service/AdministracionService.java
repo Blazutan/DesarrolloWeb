@@ -43,6 +43,13 @@ public class AdministracionService {
         return mesaDAO.listar().stream().map(this::mesaResponse).toList();
     }
 
+    public List<MesaResponse> listarMesasDisponibles() {
+        return mesaDAO.listar().stream()
+                .filter(mesa -> "LIBRE".equalsIgnoreCase(mesa.getEstado()) && mesa.getPedido() == null)
+                .map(this::mesaResponse)
+                .toList();
+    }
+
     public MesaResponse buscarMesa(Long id) {
         Mesa mesa = mesaDAO.buscarPorId(id);
         return mesa == null ? null : mesaResponse(mesa);
@@ -180,8 +187,11 @@ public class AdministracionService {
                 || datos.correo() == null || datos.correo().isBlank()) {
             throw new IllegalArgumentException("Nombre y correo son obligatorios.");
         }
-        if (passwordRequired && (datos.password() == null || datos.password().isBlank())) {
-            throw new IllegalArgumentException("La contraseña es obligatoria al crear una cuenta.");
+        if (passwordRequired && (datos.password() == null || datos.password().trim().length() < 8)) {
+            throw new IllegalArgumentException("La contraseña debe tener al menos 8 caracteres.");
+        }
+        if (datos.password() != null && datos.password().length() > 72) {
+            throw new IllegalArgumentException("La contraseña no puede superar 72 caracteres.");
         }
     }
 

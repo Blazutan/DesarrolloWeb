@@ -12,5 +12,7 @@ public interface PedidoDAO extends DAO<Pedido> {
 
 	List<Pedido> listarAlertas(String correoMesero);
 
+	List<Pedido> listarPorMesero(String correoMesero);
+
 	List<Pedido> listarRecordatoriosVencidos(LocalDateTime ahora, int maximoRecordatorios);
 }

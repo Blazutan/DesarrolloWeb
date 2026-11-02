@@ -1,36 +1,38 @@
 # PoliRestaurante cliente
 
-Cliente Angular 20 + PrimeNG para la API Spring Boot. El mesero cuenta con menú, filtro por categoría, creación de pedidos y consulta de alertas. El acceso reconoce los roles Mesero, Cocina y Administrador.
+Cliente Angular 20 + PrimeNG para la API Spring Boot. Incluye los módulos funcionales Mesero, Cocina y Administración.
 
-## Rutas de navegación
+## Rutas
 
-| Ruta | Vista |
-| --- | --- |
-| `/login` | Inicio de sesión para los tres roles. |
-| `/menu` | Carta, categorías y creación de pedidos (solo mesero). |
-| `/pedidos` | Alertas de pedidos listos (solo mesero). |
-| `/cocina` | Ruta protegida de cocina; panel funcional pendiente. |
-| `/administracion` | Ruta protegida de administración; panel funcional pendiente. |
+| Ruta | Funcionalidad | Permiso |
+|---|---|---|
+| `/login` | Acceso del personal e identificación de rol con `GET /api/auth/me`. | Público |
+| `/menu` | Menú, selección de mesa libre, carrito y creación atómica del pedido. | Mesero |
+| `/pedidos` | Pedidos propios, alertas, acuse, entrega y cancelación con motivo. | Mesero |
+| `/cocina` | Cola con productos y notas, toma de pedido y transición a listo. | Cocina |
+| `/administracion` | CRUD de categorías, productos, mesas y cuentas; reportes de ventas y tiempos. | Administrador |
 
-## Endpoints usados
+Las rutas usan guards por autenticación y rol. Las peticiones protegidas envían HTTP Basic solo a `/api/`. El backend identifica el perfil por `GET /api/auth/me`; el cliente no deduce el rol consultando operaciones de negocio.
+
+## Contratos de la API usados
 
 | Método | Endpoint | Uso |
-| --- | --- | --- |
-| `GET` | `/api/categorias` | Cargar categorías y validar credenciales para todos los roles. |
-| `GET` | `/api/productos` | Cargar la carta. |
-| `POST` | `/api/pedidos` | Crear pedido con la identidad del mesero. |
-| `POST` | `/api/detalles-pedido` | Añadir producto al pedido. |
-| `GET` | `/api/pedidos/alertas` | Alertas de pedidos listos y detección de rol Mesero. |
-| `GET` | `/api/pedidos/cola/cocina` | Detección de rol Cocina. |
-| `GET` | `/api/administracion/mesas` | Detección de rol Administrador. |
-
-El login valida credenciales con `GET /api/categorias` y consulta las rutas exclusivas de alertas (MESERO), cola (COCINA) y mesas (ADMINISTRADOR). La API no expone un endpoint de usuario actual/rol, por lo que el cliente infiere el perfil por la respuesta HTTP de esas rutas protegidas. Las rutas de menú y pedidos están limitadas al mesero; `/cocina` y `/administracion` ya aplican su guard de rol, pero sus páginas funcionales aún deben construirse. Las credenciales se conservan en `sessionStorage` y el interceptor envía HTTP Basic únicamente a rutas `/api/`.
+|---|---|---|
+| `GET` | `/api/auth/me` | Validar credenciales y consultar correo/rol. |
+| `GET` | `/api/categorias`, `/api/productos` | Cargar carta y filtros. |
+| `GET` | `/api/mesas/disponibles` | Cargar mesas libres. |
+| `POST` | `/api/pedidos` | Crear pedido con `mesaId` y lista no vacía de detalles. |
+| `GET` | `/api/pedidos/mis-pedidos`, `/api/pedidos/alertas` | Pedidos activos y alertas propios. |
+| `PATCH` | `/api/pedidos/{id}/recibido`, `/entrega`, `/cancelacion` | Acusar, entregar o cancelar pedidos propios. |
+| `GET` | `/api/pedidos`, `/api/detalles-pedido` | Cargar pedidos y detalles de cocina. |
+| `PATCH` | `/api/pedidos/{id}/estado?estado=...` | Avanzar preparación y marcar listo. |
+| `GET/POST/PUT/DELETE/PATCH` | `/api/administracion/**`, `/api/categorias/**`, `/api/productos/**` | Operaciones autorizadas de administración. |
 
 ## Desarrollo
 
 Requiere Node.js 20.19+ y npm, además del backend y MySQL configurados según el README raíz.
 
-```bash
+```powershell
 npm install
 npm start
 ```
@@ -39,12 +41,11 @@ Angular sirve la app en `http://localhost:4200` y reenvía `/api`, `/v3/api-docs
 
 ## Pruebas unitarias
 
-Se usa Karma/Jasmine con Chrome headless. Las pruebas de `AppComponent`, `LoginComponent`, `AuthService`, `AuthGuard`, `MenuComponent` y `PedidosComponent` cubren el formulario, detección de rol, navegación protegida, menú, creación de pedido y presentación de alertas.
+Karma/Jasmine con Chrome headless. Hay pruebas de autenticación, guards, interceptor, servicios HTTP y páginas de Mesero, Cocina y Administración.
 
-```bash
+```powershell
 npm test
+npm run build
 ```
 
-## Swagger / OpenAPI
-
-Con Spring Boot iniciado, la documentación interactiva está en [`http://localhost:8080/swagger-ui/index.html`](http://localhost:8080/swagger-ui/index.html) y el documento OpenAPI en [`http://localhost:8080/v3/api-docs`](http://localhost:8080/v3/api-docs). Pulsa **Authorize** en Swagger UI e ingresa correo y contraseña HTTP Basic para probar rutas protegidas. Cada operación aplica los roles existentes de la API.
+Swagger/OpenAPI está en `http://localhost:8080/swagger-ui/index.html` durante desarrollo. Usa **Authorize** y credenciales de una cuenta de prueba.

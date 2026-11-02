@@ -14,4 +14,14 @@ public class ExcepcionesGlobales {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body("Operación no permitida: dato duplicado o referenciado por otros registros.");
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> solicitudInvalida(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> conflictoDeEstado(IllegalStateException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    }
 }

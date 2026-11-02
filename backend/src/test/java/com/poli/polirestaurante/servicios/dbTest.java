@@ -24,10 +24,10 @@ class DatabaseConnectionTest {
     }
 
     @Test
-    void laBaseDeDatosDeberiaSerMySQL() throws Exception {
+    void laBaseDeDatosDePruebasDeberiaSerH2Aislada() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
             String nombreProducto = connection.getMetaData().getDatabaseProductName();
-            assertThat(nombreProducto).isEqualToIgnoringCase("MySQL");
+            assertThat(nombreProducto).isEqualToIgnoringCase("H2");
         }
     }
 }

@@ -9,12 +9,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.poli.polirestaurante.dao.CocinaDAO;
+import com.poli.polirestaurante.dao.DetallePedidoDAO;
 import com.poli.polirestaurante.dao.EstadoPedidoDAO;
+import com.poli.polirestaurante.dao.MesaDAO;
 import com.poli.polirestaurante.dao.MeseroDAO;
 import com.poli.polirestaurante.dao.PedidoDAO;
+import com.poli.polirestaurante.dao.ProductoDAO;
+import com.poli.polirestaurante.dto.PedidoItemRequest;
+import com.poli.polirestaurante.dto.PedidoRequest;
+import com.poli.polirestaurante.modelo.DetallePedido;
+import com.poli.polirestaurante.modelo.Mesa;
 import com.poli.polirestaurante.modelo.EstadoPedido;
 import com.poli.polirestaurante.modelo.Mesero;
 import com.poli.polirestaurante.modelo.Pedido;
+import com.poli.polirestaurante.modelo.Producto;
 
 @Service
 @Transactional
@@ -32,21 +40,64 @@ public class PedidoService {
     private final MeseroDAO meseroDAO;
     private final CocinaDAO cocinaDAO;
     private final EstadoPedidoDAO estadoPedidoDAO;
+    private final MesaDAO mesaDAO;
+    private final ProductoDAO productoDAO;
+    private final DetallePedidoDAO detallePedidoDAO;
 
     public PedidoService(PedidoDAO pedidoDAO, MeseroDAO meseroDAO, CocinaDAO cocinaDAO,
-            EstadoPedidoDAO estadoPedidoDAO) {
+            EstadoPedidoDAO estadoPedidoDAO, MesaDAO mesaDAO, ProductoDAO productoDAO,
+            DetallePedidoDAO detallePedidoDAO) {
         this.pedidoDAO = pedidoDAO;
         this.meseroDAO = meseroDAO;
         this.cocinaDAO = cocinaDAO;
         this.estadoPedidoDAO = estadoPedidoDAO;
+        this.mesaDAO = mesaDAO;
+        this.productoDAO = productoDAO;
+        this.detallePedidoDAO = detallePedidoDAO;
     }
 
-    public Pedido crear(String correoMesero) {
+    public Pedido crear(String correoMesero, PedidoRequest datos) {
+        validarPedido(datos);
         Mesero mesero = meseroDAO.buscarPorCorreo(correoMesero);
         if (mesero == null) {
             return null;
         }
-        return pedidoDAO.crear(new Pedido(mesero, buscarEstado(PENDIENTE)));
+        Mesa mesa = mesaDAO.buscarPorId(datos.mesaId());
+        if (mesa == null) {
+            return null;
+        }
+        if (!"LIBRE".equalsIgnoreCase(mesa.getEstado()) || mesa.getPedido() != null) {
+            throw new IllegalStateException("La mesa seleccionada ya no está disponible.");
+        }
+
+        Pedido pedido = pedidoDAO.crear(new Pedido(mesero, buscarEstado(PENDIENTE)));
+        for (PedidoItemRequest item : datos.detalles()) {
+            Producto producto = productoDAO.buscarPorId(item.productoId());
+            if (producto == null) {
+                throw new IllegalArgumentException("Uno de los productos indicados no existe.");
+            }
+            if (!producto.isDisponibilidad()) {
+                throw new IllegalArgumentException("El producto " + producto.getNombre() + " no está disponible.");
+            }
+            DetallePedido detalle = detallePedidoDAO.crear(
+                    new DetallePedido(pedido, producto, item.cantidad(), item.notas()));
+            pedido.agregarDetalle(detalle);
+        }
+        pedido.setPrecioTotal(pedido.calcularTotal());
+        mesa.ocupar();
+        mesa.setPedido(pedido);
+        pedido.getMesas().add(mesa);
+        mesaDAO.actualizar(mesa);
+        return pedidoDAO.actualizar(pedido);
+    }
+
+    public List<Pedido> listarPorMesero(String correoMesero) {
+        return pedidoDAO.listarPorMesero(correoMesero).stream()
+                .filter(pedido -> {
+                    String estado = normalizar(pedido.getEstado().getNombre());
+                    return !ENTREGADO.equals(estado) && !CANCELADO.equals(estado);
+                })
+                .toList();
     }
 
     public List<Pedido> listarPendientes() {
@@ -184,6 +235,7 @@ public class PedidoService {
         pedido.setFechaUltimaActualizacion(LocalDateTime.now());
         pedido.setAlertaRecibida(true);
         pedido.setFechaProximoRecordatorio(null);
+        liberarMesa(pedido);
         return pedidoDAO.actualizar(pedido);
     }
 
@@ -200,9 +252,29 @@ public class PedidoService {
         LocalDateTime ahora = LocalDateTime.now();
         pedido.setEstado(buscarEstado(ENTREGADO));
         pedido.setFechaEntregado(ahora);
+        pedido.setFechaUltimaActualizacion(ahora);
         pedido.setAlertaRecibida(true);
         pedido.setFechaProximoRecordatorio(null);
+        liberarMesa(pedido);
         return pedidoDAO.actualizar(pedido);
+    }
+
+    private void validarPedido(PedidoRequest datos) {
+        if (datos == null || datos.mesaId() == null || datos.detalles() == null || datos.detalles().isEmpty()) {
+            throw new IllegalArgumentException("La mesa y al menos un producto son obligatorios.");
+        }
+        if (datos.detalles().stream().anyMatch(item -> item == null || item.productoId() == null
+                || item.cantidad() <= 0)) {
+            throw new IllegalArgumentException("Cada detalle requiere un producto y una cantidad positiva.");
+        }
+    }
+
+    private void liberarMesa(Pedido pedido) {
+        mesaDAO.buscarPorPedidoId(pedido.getId()).ifPresent(mesa -> {
+            mesa.liberar();
+            mesaDAO.actualizar(mesa);
+            pedido.getMesas().removeIf(ocupada -> ocupada.getId().equals(mesa.getId()));
+        });
     }
 
     private void validarMeseroResponsable(Pedido pedido, String correoMesero) {

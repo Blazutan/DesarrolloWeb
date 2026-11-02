@@ -14,6 +14,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     List<Pedido> findByMesero_CorreoIgnoreCaseAndEstado_NombreIgnoreCaseAndAlertaRecibidaFalseOrderByFechaListoAsc(
 	    String correoMesero, String nombreEstado);
 
+    List<Pedido> findByMesero_CorreoIgnoreCaseOrderByFechaCreacionDesc(String correoMesero);
+
     List<Pedido> findByEstado_NombreIgnoreCaseAndAlertaRecibidaFalseAndNumeroRecordatoriosLessThanAndFechaProximoRecordatorioLessThanEqual(
 	    String nombreEstado, int maximoRecordatorios, LocalDateTime ahora);
 }

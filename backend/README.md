@@ -20,13 +20,15 @@ Backend REST para el sistema de pedidos de PoliRestaurante, desarrollado con Jav
 
 ## Configuración
 
-Se necesita Java 21 y MySQL. Configura `DB_URL`, `DB_USERNAME` y `DB_PASSWORD`. `DB_URL` debe ser una URL JDBC, por ejemplo `jdbc:mysql://localhost:3306/polirestaurante`.
+Se necesita Java 21 y MySQL. Configura `DB_URL`, `DB_USERNAME` y `DB_PASSWORD`; usa [`.env.example`](.env.example) como plantilla y no compartas `.env`. `DB_URL` debe ser una URL JDBC, por ejemplo `jdbc:mysql://localhost:3306/polirestaurante`.
 
 Al ejecutar Maven desde esta carpeta, las variables locales también se leen desde `backend/.env`. Mantén ese archivo privado y fuera de Git.
 
 Las contraseñas nuevas se almacenan con BCrypt. Las cuentas preexistentes con contraseñas en texto plano deben migrarse a BCrypt antes de iniciar sesión.
 
-La autenticación no tiene una ruta de inicio de sesión independiente: envía el correo y la contraseña mediante HTTP Basic en cada solicitud protegida.
+La identidad autenticada está disponible en `GET /api/auth/me` y solo devuelve el correo y el rol. El resto de solicitudes protegidas usa HTTP Basic. Las credenciales se envían en cada petición; configura HTTPS fuera del entorno local.
+
+El perfil `prod` deshabilita Swagger/OpenAPI. Actívalo con `SPRING_PROFILES_ACTIVE=prod`; la documentación se mantiene disponible para desarrollo.
 
 ## API
 
@@ -34,7 +36,10 @@ La autenticación usa HTTP Basic con correo y contraseña.
 
 | Método | Ruta | Rol | Función |
 |---|---|---|---|
-| `POST` | `/api/pedidos` | `MESERO` | Crear un pedido ligado al mesero autenticado. |
+| `GET` | `/api/auth/me` | Todos los roles autenticados | Consultar correo y rol sin leer datos de negocio. |
+| `GET` | `/api/mesas/disponibles` | `MESERO`, `ADMINISTRADOR` | Consultar mesas libres para crear un pedido. |
+| `POST` | `/api/pedidos` | `MESERO` | Crear en una transacción un pedido con mesa y uno o más detalles: `{"mesaId":1,"detalles":[{"productoId":2,"cantidad":1,"notas":""}]}`. |
+| `GET` | `/api/pedidos/mis-pedidos` | `MESERO` | Consultar los pedidos activos del mesero autenticado. |
 | `GET` | `/api/pedidos/cola/cocina` | `COCINA` | Consultar pendientes ordenados por fecha. |
 | `PATCH` | `/api/pedidos/{id}/estado?estado=EN PREPARACIÓN` | `COCINA` | Registrar preparación o estado listo y sus tiempos. |
 | `PATCH` | `/api/pedidos/{id}/entrega` | `MESERO` responsable | Registrar la entrega y su hora. |
@@ -68,15 +73,17 @@ La autenticación usa HTTP Basic con correo y contraseña.
 | `GET` | `/api/administracion/reportes/ventas?desde=AAAA-MM-DD&hasta=AAAA-MM-DD` | `ADMINISTRADOR` | Consultar ventas, ticket promedio y productos vendidos durante el periodo indicado. |
 | `GET` | `/api/administracion/reportes/tiempos?desde=AAAA-MM-DD&hasta=AAAA-MM-DD` | `ADMINISTRADOR` | Consultar promedios de preparación, espera hasta entrega y tiempo total, en segundos. |
 
-La vista de alertas para meseros está disponible en `/alertas.html`; consulta el API cada cinco segundos y permite confirmar la recepción.
+La vista web de meseros consulta pedidos y alertas; permite confirmar la recepción, entregar o cancelar con motivo. Cocina consulta pedidos y detalles y avanza sus estados. Al entregar o cancelar un pedido se libera la mesa asociada.
 
 El estado `CANCELADO` debe existir en la tabla `estado_pedido`. La cancelación actualiza `motivoCancelacion` y `fechaUltimaActualizacion` del pedido, sin eliminarlo ni añadir columnas.
 
 ## Pruebas
 
-```bash
-./mvnw test
+```powershell
+.\mvnw.cmd test
 ```
+
+Las pruebas usan `src/test/resources/application.properties` y H2 en memoria en modo compatible con MySQL; no se conectan a la URL de `.env`. La prueba de ciclo HTTP verifica pedido, autorización por rol, persistencia, avance de cocina, entrega y liberación de mesa. OpenAPI tiene pruebas de rutas, esquemas y `x-required-roles`.
 ## Swagger / OpenAPI
 
 La documentación OpenAPI se sirve desde `/v3/api-docs` y Swagger UI desde `/swagger-ui/index.html`. Usa **Authorize** para ingresar correo y contraseña mediante HTTP Basic al probar rutas protegidas. Las operaciones conservan los roles y permisos de la API.

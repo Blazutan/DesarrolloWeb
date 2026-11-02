@@ -2,6 +2,7 @@ package com.poli.polirestaurante.controller;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,13 +39,13 @@ public class EstadoPedidoController {
     }
 
     @PostMapping
-    public ResponseEntity<EstadoPedido> crear(@RequestBody EstadoPedido estado) {
+    public ResponseEntity<EstadoPedido> crear(@Valid @RequestBody EstadoPedido estado) {
         estado.setId(null);
         return ResponseEntity.status(HttpStatus.CREATED).body(estadoPedidoDAO.crear(estado));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EstadoPedido> actualizar(@PathVariable Long id, @RequestBody EstadoPedido datos) {
+    public ResponseEntity<EstadoPedido> actualizar(@PathVariable Long id, @Valid @RequestBody EstadoPedido datos) {
         EstadoPedido estado = estadoPedidoDAO.buscarPorId(id);
         if (estado == null) {
             return ResponseEntity.notFound().build();

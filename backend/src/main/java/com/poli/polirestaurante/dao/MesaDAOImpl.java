@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class MesaDAOImpl implements MesaDAO {
@@ -44,5 +45,10 @@ public class MesaDAOImpl implements MesaDAO {
         }
         mesaRepository.deleteById(id);
         return true;
+    }
+
+    @Override
+    public Optional<Mesa> buscarPorPedidoId(Long pedidoId) {
+        return mesaRepository.findFirstByPedido_Id(pedidoId);
     }
 }

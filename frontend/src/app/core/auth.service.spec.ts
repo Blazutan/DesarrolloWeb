@@ -16,38 +16,36 @@ describe('AuthService', () => {
 
   afterEach(() => http.verify());
 
-  it('detecta el rol de mesero antes de guardar la sesión', () => {
+  it('consulta la identidad autenticada sin inferir el rol desde datos de negocio', () => {
     service.login({ usuario: 'mesero@test.com', clave: 'clave' }).subscribe();
-    const common = http.expectOne('/api/categorias');
-    expect(common.request.headers.get('Authorization')).toMatch(/^Basic /);
+    const request = http.expectOne('/api/auth/me');
+    expect(request.request.headers.get('Authorization')).toMatch(/^Basic /);
     expect(service.isAuthenticated()).toBeFalse();
-    common.flush([]);
-
-    http.expectOne('/api/pedidos/alertas').flush([]);
-    http.expectOne('/api/pedidos/cola/cocina').flush({}, { status: 403, statusText: 'Forbidden' });
-    http.expectOne('/api/administracion/mesas').flush({}, { status: 403, statusText: 'Forbidden' });
+    request.flush({ correo: 'mesero@test.com', rol: 'MESERO' });
 
     expect(service.isAuthenticated()).toBeTrue();
     expect(service.role()).toBe('MESERO');
     expect(JSON.parse(sessionStorage.getItem('poli-auth') ?? '{}').usuario).toBe('mesero@test.com');
   });
 
-  it('detecta el rol de cocina', () => {
+  it('guarda el rol de cocina reportado por la API', () => {
     service.login({ usuario: 'cocina@test.com', clave: 'clave' }).subscribe();
-    http.expectOne('/api/categorias').flush([]);
-    http.expectOne('/api/pedidos/alertas').flush({}, { status: 403, statusText: 'Forbidden' });
-    http.expectOne('/api/pedidos/cola/cocina').flush([]);
-    http.expectOne('/api/administracion/mesas').flush({}, { status: 403, statusText: 'Forbidden' });
+    http.expectOne('/api/auth/me').flush({ correo: 'cocina@test.com', rol: 'COCINA' });
     expect(service.role()).toBe('COCINA');
   });
 
-  it('detecta administración por la autorización del espacio protegido', () => {
+  it('guarda el rol de administración reportado por la API', () => {
     service.login({ usuario: 'admin@test.com', clave: 'clave' }).subscribe();
-    http.expectOne('/api/categorias').flush([]);
-    http.expectOne('/api/pedidos/alertas').flush({}, { status: 403, statusText: 'Forbidden' });
-    http.expectOne('/api/pedidos/cola/cocina').flush({}, { status: 403, statusText: 'Forbidden' });
-    http.expectOne('/api/administracion/mesas').flush([]);
+    http.expectOne('/api/auth/me').flush({ correo: 'admin@test.com', rol: 'ADMINISTRADOR' });
     expect(service.role()).toBe('ADMINISTRADOR');
+  });
+
+  it('rechaza roles desconocidos', () => {
+    let fallo: unknown;
+    service.login({ usuario: 'usuario@test.com', clave: 'clave' }).subscribe({ error: error => fallo = error });
+    http.expectOne('/api/auth/me').flush({ correo: 'usuario@test.com', rol: 'DESCONOCIDO' });
+    expect(fallo).toBeTruthy();
+    expect(service.isAuthenticated()).toBeFalse();
   });
 
   it('cierra la sesión y elimina las credenciales', () => {
