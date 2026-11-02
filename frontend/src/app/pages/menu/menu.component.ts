@@ -30,12 +30,6 @@ export class MenuComponent implements OnInit {
   readonly categoriaSeleccionada = signal<number | null>(null);
   readonly productosFiltrados = computed(() => this.productos().filter(p => this.categoriaSeleccionada() == null || p.categoriaId === this.categoriaSeleccionada()));
   ngOnInit(): void {
-    if (!sessionStorage.getItem('poli-auth')) {
-      const usuario = window.prompt('Correo de tu cuenta de mesero');
-      const clave = usuario ? window.prompt('Contraseña') : null;
-      if (!usuario || !clave) { this.error.set('Inicia sesión con una cuenta de mesero para cargar la carta.'); return; }
-      sessionStorage.setItem('poli-auth', JSON.stringify({ usuario, clave }));
-    }
     this.cargarMenu();
   }
   private cargarMenu(): void {
@@ -54,7 +48,7 @@ export class MenuComponent implements OnInit {
     if (this.pedidoId !== null) { this.agregarAlPedido(this.pedidoId, producto); return; }
     this.api.crearPedido().subscribe({
       next: pedido => { this.pedidoId = pedido.id; this.agregarAlPedido(pedido.id, producto); },
-      error: () => { sessionStorage.removeItem('poli-auth'); this.messages.add({ severity: 'error', summary: 'No se pudo crear el pedido', detail: 'Revisa que las credenciales correspondan a un mesero.' }); }
+      error: () => this.messages.add({ severity: 'error', summary: 'No se pudo crear el pedido', detail: 'Verifica que tu cuenta tenga el rol de mesero.' })
     });
   }
   private agregarAlPedido(pedidoId: number, producto: Producto): void {

@@ -17,13 +17,10 @@ export class PedidosComponent implements OnInit {
   readonly error = signal('');
   ngOnInit(): void { this.cargar(); }
   cargar(): void {
-    if (!sessionStorage.getItem('poli-auth')) {
-      const usuario = window.prompt('Correo de tu cuenta de mesero');
-      const clave = usuario ? window.prompt('Contraseña') : null;
-      if (!usuario || !clave) { this.error.set('Inicia sesión con una cuenta de mesero para consultar tus alertas.'); return; }
-      sessionStorage.setItem('poli-auth', JSON.stringify({ usuario, clave }));
-    }
     this.error.set('');
-    this.api.alertas().subscribe({ next: value => this.alertas.set(value), error: () => { sessionStorage.removeItem('poli-auth'); this.error.set('No se pudieron cargar las alertas. Comprueba tus credenciales de mesero.'); } });
+    this.api.alertas().subscribe({
+      next: value => this.alertas.set(value),
+      error: () => this.error.set('No se pudieron cargar las alertas. Revisa tu sesión y tu conexión.')
+    });
   }
 }

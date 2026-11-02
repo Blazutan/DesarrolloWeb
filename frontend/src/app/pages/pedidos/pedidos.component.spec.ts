@@ -8,7 +8,7 @@ describe('PedidosComponent', () => {
   const api = { alertas: jasmine.createSpy().and.returnValue(of(alertas)) };
 
   beforeEach(() => {
-    sessionStorage.setItem('poli-auth', JSON.stringify({ usuario: 'mesero@test.com', clave: 'secreto' }));
+    sessionStorage.setItem('poli-auth', JSON.stringify({ usuario: 'mesero@test.com', clave: 'secreto', rol: 'MESERO' }));
     api.alertas.calls.reset();
   });
 

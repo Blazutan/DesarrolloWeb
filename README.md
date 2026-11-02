@@ -5,7 +5,7 @@ Sistema de pedidos con API Spring Boot y cliente Angular + PrimeNG.
 ## Estructura
 
 - `backend/`: API REST Java 21 / Spring Boot, acceso a MySQL, Swagger/OpenAPI y pruebas del servidor.
-- `frontend/`: interfaz Angular, rutas `/menu` y `/pedidos`, pruebas unitarias y proxy local a la API.
+- `frontend/`: interfaz Angular, login por rol en `/login`, vistas de mesero en `/menu` y `/pedidos`, rutas protegidas `/cocina` y `/administracion`, pruebas unitarias y proxy local a la API.
 
 ## Configuración y ejecución
 
