@@ -81,6 +81,13 @@ public class Producto {
         this.precio = precio;
     }
 
+    public void actualizarPrecio(BigDecimal nuevoPrecio) {
+        if (nuevoPrecio == null || nuevoPrecio.signum() < 0) {
+            throw new IllegalArgumentException("El precio debe ser mayor o igual a cero.");
+        }
+        this.precio = nuevoPrecio;
+    }
+
     public boolean isDisponibilidad() {
         return disponibilidad;
     }

@@ -3,6 +3,8 @@ package com.poli.polirestaurante.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.poli.polirestaurante.dao.EstadoPedidoDAO;
+import com.poli.polirestaurante.dao.CocinaDAO;
 import com.poli.polirestaurante.dao.MeseroDAO;
 import com.poli.polirestaurante.dao.PedidoDAO;
 import com.poli.polirestaurante.modelo.EstadoPedido;
@@ -31,6 +34,9 @@ class PedidoServiceTest {
 
     @Mock
     private MeseroDAO meseroDAO;
+
+    @Mock
+    private CocinaDAO cocinaDAO;
 
     @Mock
     private EstadoPedidoDAO estadoPedidoDAO;
@@ -63,10 +69,10 @@ class PedidoServiceTest {
     @Test
     void crear_asociaElMeseroYDejaElPedidoPendienteConFechaDeCreacion() {
         configurarEstados();
-        when(meseroDAO.buscarPorId(1L)).thenReturn(mesero);
+        when(meseroDAO.buscarPorCorreo(mesero.getCorreo())).thenReturn(mesero);
         when(pedidoDAO.crear(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
 
-        Pedido resultado = pedidoService.crear(1L);
+        Pedido resultado = pedidoService.crear(mesero.getCorreo());
 
         assertThat(resultado.getMesero()).isSameAs(mesero);
         assertThat(resultado.getEstado()).isSameAs(pendiente);
@@ -101,6 +107,9 @@ class PedidoServiceTest {
         assertThat(pedido.getFechaEntregado()).isNotNull();
         assertThat(fechaListo).isAfterOrEqualTo(fechaPreparacion);
         assertThat(pedido.getFechaEntregado()).isAfterOrEqualTo(fechaListo);
+        assertThat(pedido.getNumeroRecordatorios()).isEqualTo(1);
+        assertThat(pedido.isAlertaRecibida()).isFalse();
+        assertThat(pedido.getFechaProximoRecordatorio()).isNotNull();
     }
 
     @Test
@@ -113,24 +122,119 @@ class PedidoServiceTest {
     }
 
     @Test
-    void cancelar_guardaElMotivoAntesDeLaEntrega() {
+    void cancelar_pedidoPendienteGuardaEstadoMotivoYFechaDeActualizacion() {
         configurarEstados();
-        Pedido pedido = new Pedido(mesero, listo);
+        Pedido pedido = new Pedido(mesero, pendiente);
         when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
         when(pedidoDAO.actualizar(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
 
-        Pedido resultado = pedidoService.cancelar(10L, "  Cliente se retiró  ");
+        Pedido resultado = pedidoService.cancelar(10L, "  Cliente desistió  ", mesero.getCorreo());
 
         assertThat(resultado.getEstado()).isSameAs(cancelado);
-        assertThat(resultado.getMotivoCancelacion()).isEqualTo("Cliente se retiró");
+        assertThat(resultado.getMotivoCancelacion()).isEqualTo("Cliente desistió");
+        assertThat(resultado.getFechaUltimaActualizacion()).isNotNull();
+        assertThat(resultado.isAlertaRecibida()).isTrue();
+        assertThat(resultado.getFechaProximoRecordatorio()).isNull();
+        verify(pedidoDAO).actualizar(pedido);
     }
 
     @Test
-    void cancelar_rechazaPedidosEntregados() {
-        Pedido pedido = new Pedido(mesero, entregado);
+    void cancelar_permitePedidoListo() {
+        configurarEstados();
+        Pedido pedido = new Pedido(mesero, listo);
+        pedido.setFechaProximoRecordatorio(LocalDateTime.now().plusMinutes(1));
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+        when(pedidoDAO.actualizar(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+
+        Pedido resultado = pedidoService.cancelar(10L, "El cliente desistió", mesero.getCorreo());
+
+        assertThat(resultado.getEstado()).isSameAs(cancelado);
+        assertThat(resultado.getMotivoCancelacion()).isEqualTo("El cliente desistió");
+        assertThat(resultado.getFechaProximoRecordatorio()).isNull();
+    }
+
+    @Test
+    void cancelar_permitePedidoEnPreparacion() {
+        configurarEstados();
+        Pedido pedido = new Pedido(mesero, enPreparacion);
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+        when(pedidoDAO.actualizar(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+
+        Pedido resultado = pedidoService.cancelar(10L, "El cliente desistió", mesero.getCorreo());
+
+        assertThat(resultado.getEstado()).isSameAs(cancelado);
+    }
+
+    @Test
+    void cancelar_rechazaPedidoDeOtroMeseroOPedidoEntregado() {
+        Pedido pedidoPendiente = new Pedido(mesero, pendiente);
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedidoPendiente);
+        assertThatThrownBy(() -> pedidoService.cancelar(10L, "Cambio de opinión", "otro@restaurante.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("El pedido no pertenece al mesero autenticado.");
+
+        Pedido pedidoEntregado = new Pedido(mesero, entregado);
+        when(pedidoDAO.buscarPorId(11L)).thenReturn(pedidoEntregado);
+        assertThatThrownBy(() -> pedidoService.cancelar(11L, "Cambio de opinión", mesero.getCorreo()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No se puede cancelar un pedido entregado o ya cancelado.");
+
+        verify(pedidoDAO, never()).actualizar(any(Pedido.class));
+    }
+
+    @Test
+    void cancelar_rechazaCancelarUnPedidoDosVeces() {
+        Pedido pedido = new Pedido(mesero, cancelado);
         when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
 
-        assertThatThrownBy(() -> pedidoService.cancelar(10L, "Error"))
+        assertThatThrownBy(() -> pedidoService.cancelar(10L, "Otro motivo", mesero.getCorreo()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No se puede cancelar un pedido entregado o ya cancelado.");
+        verify(pedidoDAO, never()).actualizar(any(Pedido.class));
+    }
+
+    @Test
+    void cambiarEstado_rechazaPedidoCancelado() {
+        Pedido pedido = new Pedido(mesero, cancelado);
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+
+        assertThatThrownBy(() -> pedidoService.cambiarEstado(10L, "EN PREPARACIÓN"))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(pedidoDAO, never()).actualizar(any(Pedido.class));
+    }
+
+    @Test
+    void enviarRecordatoriosVencidos_noSuperaTresYDesactivaElSiguienteAlLlegarAlMaximo() {
+        Pedido pedido = new Pedido(mesero, listo);
+        pedido.setNumeroRecordatorios(2);
+        when(pedidoDAO.listarRecordatoriosVencidos(any(LocalDateTime.class), eq(3))).thenReturn(List.of(pedido));
+
+        pedidoService.enviarRecordatoriosVencidos();
+
+        assertThat(pedido.getNumeroRecordatorios()).isEqualTo(3);
+        assertThat(pedido.getFechaProximoRecordatorio()).isNull();
+        verify(pedidoDAO).actualizar(pedido);
+    }
+
+    @Test
+    void marcarAlertaRecibida_detieneLosSiguientesRecordatorios() {
+        Pedido pedido = new Pedido(mesero, listo);
+        pedido.setFechaProximoRecordatorio(LocalDateTime.now().plusMinutes(1));
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+        when(pedidoDAO.actualizar(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+
+        Pedido resultado = pedidoService.marcarAlertaRecibida(10L, mesero.getCorreo());
+
+        assertThat(resultado.isAlertaRecibida()).isTrue();
+        assertThat(resultado.getFechaProximoRecordatorio()).isNull();
+    }
+
+    @Test
+    void marcarAlertaRecibida_rechazaAUnMeseroQueNoEsElResponsable() {
+        Pedido pedido = new Pedido(mesero, listo);
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+
+        assertThatThrownBy(() -> pedidoService.marcarAlertaRecibida(10L, "otro@restaurante.com"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

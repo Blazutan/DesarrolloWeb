@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.anyLong;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,6 +26,9 @@ class AdministradorDAOImplTest {
     @Mock
     private AdministradorRepository administradorRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private AdministradorDAOImpl administradorDAO;
 
@@ -38,9 +42,11 @@ class AdministradorDAOImplTest {
 
     @Test
     void crear_deberiaGuardarYRetornarElAdministrador() {
+        when(passwordEncoder.encode("hashedpassword")).thenReturn("$2a$encoded-password");
         when(administradorRepository.save(administrador)).thenReturn(administrador);
 
         assertThat(administradorDAO.crear(administrador)).isEqualTo(administrador);
+        assertThat(administrador.getPassword()).isEqualTo("$2a$encoded-password");
         verify(administradorRepository, times(1)).save(administrador);
     }
 

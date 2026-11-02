@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.anyLong;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,6 +26,9 @@ class MeseroDAOImplTest {
     @Mock
     private MeseroRepository meseroRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private MeseroDAOImpl meseroDAO;
 
@@ -38,9 +42,11 @@ class MeseroDAOImplTest {
 
     @Test
     void crear_deberiaGuardarYRetornarElMesero() {
+        when(passwordEncoder.encode("hashedpassword")).thenReturn("$2a$encoded-password");
         when(meseroRepository.save(mesero)).thenReturn(mesero);
 
         assertThat(meseroDAO.crear(mesero)).isEqualTo(mesero);
+        assertThat(mesero.getPassword()).isEqualTo("$2a$encoded-password");
         verify(meseroRepository, times(1)).save(mesero);
     }
 
