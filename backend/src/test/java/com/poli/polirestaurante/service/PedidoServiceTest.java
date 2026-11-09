@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -201,6 +202,28 @@ class PedidoServiceTest {
         Pedido resultado = pedidoService.cancelar(10L, "El cliente desistió", mesero.getCorreo());
 
         assertThat(resultado.getEstado()).isSameAs(cancelado);
+    }
+
+    @Test
+    void cancelarPorCocina_permiteCancelarPedidoYLiberaLaMesa() {
+        configurarEstados();
+        Pedido pedido = new Pedido(mesero, pendiente);
+        pedido.setId(10L);
+        Mesa mesa = new Mesa(4, "OCUPADA");
+        mesa.setId(2L);
+        mesa.setPedido(pedido);
+        pedido.getMesas().add(mesa);
+        when(pedidoDAO.buscarPorId(10L)).thenReturn(pedido);
+        when(mesaDAO.buscarPorPedidoId(10L)).thenReturn(Optional.of(mesa));
+        when(pedidoDAO.actualizar(any(Pedido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+
+        Pedido resultado = pedidoService.cancelarPorCocina(10L, "Producto no disponible");
+
+        assertThat(resultado.getEstado()).isSameAs(cancelado);
+        assertThat(resultado.getMotivoCancelacion()).isEqualTo("Producto no disponible");
+        assertThat(mesa.getEstado()).isEqualTo("LIBRE");
+        assertThat(mesa.getPedido()).isNull();
+        verify(mesaDAO).actualizar(mesa);
     }
 
     @Test

@@ -218,6 +218,18 @@ public class PedidoService {
             return null;
         }
         validarMeseroResponsable(pedido, correoMesero);
+        return cancelarPedido(pedido, motivo);
+    }
+
+    public Pedido cancelarPorCocina(Long id, String motivo) {
+        Pedido pedido = pedidoDAO.buscarPorId(id);
+        if (pedido == null) {
+            return null;
+        }
+        return cancelarPedido(pedido, motivo);
+    }
+
+    private Pedido cancelarPedido(Pedido pedido, String motivo) {
         if (motivo == null || motivo.isBlank()) {
             throw new IllegalArgumentException("El motivo de cancelación es obligatorio.");
         }

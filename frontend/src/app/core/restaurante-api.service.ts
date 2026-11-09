@@ -31,6 +31,9 @@ export class RestauranteApiService {
   cancelarPedido(id: number, motivo: string): Observable<Pedido> {
     return this.http.patch<Pedido>(`/api/pedidos/${id}/cancelacion`, { motivo });
   }
+  cancelarPedidoCocina(id: number, motivo: string): Observable<Pedido> {
+    return this.http.patch<Pedido>(`/api/pedidos/${id}/cancelacion-cocina`, { motivo });
+  }
   mesasDisponibles(): Observable<Mesa[]> { return this.http.get<Mesa[]>('/api/mesas/disponibles'); }
   administrarMesas(): Observable<Mesa[]> { return this.http.get<Mesa[]>('/api/administracion/mesas'); }
   crearMesa(datos: { numero: number; estado: string }): Observable<Mesa> {

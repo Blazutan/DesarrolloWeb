@@ -9,8 +9,8 @@ Cliente Angular 20 + PrimeNG para la API Spring Boot. Incluye los módulos funci
 | `/login` | Acceso del personal e identificación de rol con `GET /api/auth/me`. | Público |
 | `/menu` | Menú, selección de mesa libre, carrito y creación atómica del pedido. | Mesero |
 | `/pedidos` | Pedidos propios, alertas, acuse, entrega y cancelación con motivo. | Mesero |
-| `/cocina` | Cola con productos y notas, toma de pedido y transición a listo. | Cocina |
-| `/administracion` | CRUD de categorías, productos, mesas y cuentas; reportes de ventas y tiempos. | Administrador |
+| `/cocina` | Cola con productos y notas, toma de pedido, transición a listo y cancelación con motivo. | Cocina |
+| `/administracion` | CRUD de categorías, productos, mesas y cuentas; reportes de ventas por pedido con detalles y tiempos. | Administrador |
 
 Las rutas usan guards por autenticación y rol. Las peticiones protegidas envían HTTP Basic solo a `/api/`. El backend identifica el perfil por `GET /api/auth/me`; el cliente no deduce el rol consultando operaciones de negocio.
 
@@ -23,7 +23,7 @@ Las rutas usan guards por autenticación y rol. Las peticiones protegidas envía
 | `GET` | `/api/mesas/disponibles` | Cargar mesas libres. |
 | `POST` | `/api/pedidos` | Crear pedido con `mesaId` y lista no vacía de detalles. |
 | `GET` | `/api/pedidos/mis-pedidos`, `/api/pedidos/alertas` | Pedidos activos y alertas propios. |
-| `PATCH` | `/api/pedidos/{id}/recibido`, `/entrega`, `/cancelacion` | Acusar, entregar o cancelar pedidos propios. |
+| `PATCH` | `/api/pedidos/{id}/recibido`, `/entrega`, `/cancelacion`, `/cancelacion-cocina` | Acusar, entregar o cancelar pedidos; la cancelación de Cocina requiere motivo. |
 | `GET` | `/api/pedidos`, `/api/detalles-pedido` | Cargar pedidos y detalles de cocina. |
 | `PATCH` | `/api/pedidos/{id}/estado?estado=...` | Avanzar preparación y marcar listo. |
 | `GET/POST/PUT/DELETE/PATCH` | `/api/administracion/**`, `/api/categorias/**`, `/api/productos/**` | Operaciones autorizadas de administración. |

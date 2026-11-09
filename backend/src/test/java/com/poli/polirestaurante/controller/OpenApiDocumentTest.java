@@ -28,6 +28,7 @@ class OpenApiDocumentTest {
                 .andExpect(jsonPath("$.paths['/api/mesas/disponibles'].get").exists())
                 .andExpect(jsonPath("$.paths['/api/pedidos'].post['x-required-roles'][0]").value("MESERO"))
                 .andExpect(jsonPath("$.paths['/api/pedidos'].get['x-required-roles'][0]").value("COCINA"))
+                .andExpect(jsonPath("$.paths['/api/pedidos/{id}/cancelacion-cocina'].patch['x-required-roles'][0]").value("COCINA"))
                 .andExpect(jsonPath("$.components.schemas.PedidoRequest.properties.detalles").exists());
     }
 }

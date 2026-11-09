@@ -46,6 +46,7 @@ La autenticación usa HTTP Basic con correo y contraseña.
 | `GET` | `/api/pedidos/alertas` | `MESERO` | Consultar pedidos listos sin acuse. |
 | `PATCH` | `/api/pedidos/{id}/recibido` | `MESERO` responsable | Confirmar una alerta y detener recordatorios. |
 | `PATCH` | `/api/pedidos/{id}/cancelacion` | `MESERO` responsable | Cancelar un pedido pendiente, en preparación o listo indicando el motivo en el cuerpo: `{"motivo":"..."}`. |
+| `PATCH` | `/api/pedidos/{id}/cancelacion-cocina` | `COCINA` | Cancelar un pedido no entregado/no cancelado indicando el motivo en el cuerpo: `{"motivo":"..."}`. También libera la mesa asociada. |
 | `GET` | `/api/pedidos` y `/api/pedidos/{id}` | `COCINA`, `ADMINISTRADOR` | Consultar pedidos. |
 | `PUT` | `/api/pedidos/{id}` | `ADMINISTRADOR` | Actualizar las asociaciones del pedido. |
 | `DELETE` | `/api/pedidos/{id}` | `ADMINISTRADOR` | Eliminar un pedido. |
@@ -70,7 +71,7 @@ La autenticación usa HTTP Basic con correo y contraseña.
 | `POST` | `/api/administracion/usuarios/{rol}` | `ADMINISTRADOR` | Crear cuenta `MESERO`, `COCINA` o `ADMINISTRADOR`. |
 | `PUT` | `/api/administracion/usuarios/{rol}/{id}` | `ADMINISTRADOR` | Actualizar una cuenta; la contraseña es opcional. |
 | `DELETE` | `/api/administracion/usuarios/{rol}/{id}` | `ADMINISTRADOR` | Eliminar una cuenta. |
-| `GET` | `/api/administracion/reportes/ventas?desde=AAAA-MM-DD&hasta=AAAA-MM-DD` | `ADMINISTRADOR` | Consultar ventas, ticket promedio y productos vendidos durante el periodo indicado. |
+| `GET` | `/api/administracion/reportes/ventas?desde=AAAA-MM-DD&hasta=AAAA-MM-DD` | `ADMINISTRADOR` | Consultar totales de ventas y el listado de pedidos entregados, con sus detalles de productos, cantidades y subtotales. |
 | `GET` | `/api/administracion/reportes/tiempos?desde=AAAA-MM-DD&hasta=AAAA-MM-DD` | `ADMINISTRADOR` | Consultar promedios de preparación, espera hasta entrega y tiempo total, en segundos. |
 
 La vista web de meseros consulta pedidos y alertas; permite confirmar la recepción, entregar o cancelar con motivo. Cocina consulta pedidos y detalles y avanza sus estados. Al entregar o cancelar un pedido se libera la mesa asociada.

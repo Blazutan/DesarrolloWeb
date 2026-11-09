@@ -52,6 +52,9 @@ public class OpenApiConfig {
             if ("/api/pedidos".equals(path)) {
                 return "POST".equals(verb) ? List.of("MESERO") : List.of("COCINA", "ADMINISTRADOR");
             }
+            if (path.endsWith("/cancelacion-cocina")) {
+                return List.of("COCINA");
+            }
             if ("/api/pedidos/mis-pedidos".equals(path) || "/api/pedidos/alertas".equals(path)
                     || path.endsWith("/entrega") || path.endsWith("/recibido") || path.endsWith("/cancelacion")) {
                 return List.of("MESERO");

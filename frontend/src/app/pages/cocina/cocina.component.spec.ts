@@ -18,13 +18,15 @@ describe('CocinaComponent', () => {
       id: 9, pedidoId: 5, productoId: 4, productoNombre: 'Sopa', cantidad: 2,
       notas: 'Sin sal', precioUnitario: 7000, subtotal: 14000
     }])),
-    cambiarEstadoPedido: jasmine.createSpy().and.returnValue(of({ ...pedido, estado: 'EN PREPARACION' }))
+    cambiarEstadoPedido: jasmine.createSpy().and.returnValue(of({ ...pedido, estado: 'EN PREPARACION' })),
+    cancelarPedidoCocina: jasmine.createSpy().and.returnValue(of({ ...pedido, estado: 'CANCELADO' }))
   };
 
   beforeEach(() => {
     api.pedidos.calls.reset();
     api.detallesPedido.calls.reset();
     api.cambiarEstadoPedido.calls.reset();
+    api.cancelarPedidoCocina.calls.reset();
   });
 
   it('muestra la cola con detalles y estado vacío de pedidos no activos', async () => {
@@ -50,5 +52,22 @@ describe('CocinaComponent', () => {
     const component = TestBed.createComponent(CocinaComponent).componentInstance;
     component.cambiarEstado(pedido, 'EN PREPARACIÓN');
     expect(api.cambiarEstadoPedido).toHaveBeenCalledWith(5, 'EN PREPARACIÓN');
+  });
+
+  it('cancela un pedido con motivo y lo quita de la cola activa', async () => {
+    await TestBed.configureTestingModule({
+      imports: [CocinaComponent],
+      providers: [{ provide: RestauranteApiService, useValue: api }]
+    }).compileComponents();
+
+    spyOn(window, 'confirm').and.returnValue(true);
+    const component = TestBed.createComponent(CocinaComponent).componentInstance;
+    component.pedidos.set([pedido, { ...pedido, id: 6, estado: 'LISTO' }]);
+    component.motivosCancelacion[pedido.id] = '  Producto no disponible  ';
+    component.cancelarPedido(pedido);
+
+    expect(api.cancelarPedidoCocina).toHaveBeenCalledWith(5, 'Producto no disponible');
+    expect(component.pedidosActivos().map(item => item.id)).toEqual([6]);
+    expect(component.motivosCancelacion[pedido.id]).toBeUndefined();
   });
 });

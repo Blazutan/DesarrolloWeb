@@ -2,6 +2,7 @@ package com.poli.polirestaurante.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record ReporteVentasResponse(
@@ -10,8 +11,21 @@ public record ReporteVentasResponse(
         int totalPedidos,
         BigDecimal totalVentas,
         BigDecimal ticketPromedio,
-        List<ProductoVendido> productos) {
+        List<PedidoVendido> pedidos) {
 
-    public record ProductoVendido(String producto, long unidades, BigDecimal total) {
+    public record PedidoVendido(
+            Long pedidoId,
+            LocalDateTime fechaEntregado,
+            Integer mesaNumero,
+            BigDecimal total,
+            List<DetalleVendido> detalles) {
+    }
+
+    public record DetalleVendido(
+            Long productoId,
+            String producto,
+            int cantidad,
+            BigDecimal precioUnitario,
+            BigDecimal subtotal) {
     }
 }

@@ -126,6 +126,18 @@ public class PedidoController {
         }
     }
 
+    @PatchMapping("/{id}/cancelacion-cocina")
+    public ResponseEntity<?> cancelarPorCocina(@PathVariable Long id,
+            @Valid @RequestBody CancelacionPedidoRequest datos) {
+        try {
+            Pedido pedido = pedidoService.cancelarPorCocina(id, datos.motivo());
+            return pedido == null ? ResponseEntity.notFound().build()
+                    : ResponseEntity.ok(PedidoResponse.desde(pedido));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PatchMapping("/{id}/recibido")
     public ResponseEntity<?> marcarAlertaRecibida(@PathVariable Long id,
             @AuthenticationPrincipal UserDetails usuario) {
