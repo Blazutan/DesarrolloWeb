@@ -155,4 +155,29 @@ class PedidoFlowIntegrationTest {
                 .andExpect(status().isBadRequest());
         assertThat(pedidoRepository.findAll()).isEmpty();
     }
+
+    @Test
+    void cocinaCancelaPedidoYLaMesaSeLibera() throws Exception {
+        String solicitud = """
+                {"mesaId":%d,"detalles":[{"productoId":%d,"cantidad":1,"notas":""}]}
+                """.formatted(mesaId, productoId);
+        mockMvc.perform(post("/api/pedidos").with(httpBasic(correoMesero, PASSWORD))
+                        .contentType(MediaType.APPLICATION_JSON).content(solicitud))
+                .andExpect(status().isCreated());
+
+        var pedido = pedidoRepository.findAll().getFirst();
+        mockMvc.perform(patch("/api/pedidos/" + pedido.getId() + "/cancelacion-cocina")
+                        .with(httpBasic(correoCocina, PASSWORD))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"Producto no disponible\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("CANCELADO"))
+                .andExpect(jsonPath("$.motivoCancelacion").value("Producto no disponible"));
+
+        assertThat(pedidoRepository.findById(pedido.getId()).orElseThrow()
+                .getMotivoCancelacion()).isEqualTo("Producto no disponible");
+        Mesa mesaLiberada = mesaRepository.findById(mesaId).orElseThrow();
+        assertThat(mesaLiberada.getEstado()).isEqualTo("LIBRE");
+        assertThat(mesaLiberada.getPedido()).isNull();
+    }
 }

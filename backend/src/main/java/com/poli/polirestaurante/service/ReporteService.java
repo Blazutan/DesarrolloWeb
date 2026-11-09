@@ -9,7 +9,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.OptionalDouble;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.poli.polirestaurante.dao.PedidoDAO;
 import com.poli.polirestaurante.dto.ReporteTiemposResponse;
 import com.poli.polirestaurante.dto.ReporteVentasResponse;
-import com.poli.polirestaurante.dto.ReporteVentasResponse.ProductoVendido;
+import com.poli.polirestaurante.dto.ReporteVentasResponse.DetalleVendido;
+import com.poli.polirestaurante.dto.ReporteVentasResponse.PedidoVendido;
 import com.poli.polirestaurante.modelo.DetallePedido;
 import com.poli.polirestaurante.modelo.Pedido;
 
@@ -41,20 +41,26 @@ public class ReporteService {
                 ? BigDecimal.ZERO
                 : totalVentas.divide(BigDecimal.valueOf(entregados.size()), 2, RoundingMode.HALF_UP);
 
-        List<ProductoVendido> productos = entregados.stream()
-                .flatMap(pedido -> pedido.getDetalles().stream())
-                .collect(Collectors.groupingBy(detalle -> detalle.getProducto().getNombre()))
-                .entrySet().stream()
-                .map(entrada -> new ProductoVendido(
-                        entrada.getKey(),
-                        entrada.getValue().stream().mapToLong(DetallePedido::getCantidad).sum(),
-                        entrada.getValue().stream()
-                                .map(DetallePedido::calcularSubtotal)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add)))
-                .sorted(Comparator.comparingLong(ProductoVendido::unidades).reversed())
+        List<PedidoVendido> pedidos = entregados.stream()
+                .sorted(Comparator.comparing(Pedido::getFechaEntregado).thenComparing(Pedido::getId))
+                .map(pedido -> new PedidoVendido(
+                        pedido.getId(),
+                        pedido.getFechaEntregado(),
+                        pedido.getMesas().stream().findFirst().map(mesa -> mesa.getNumero()).orElse(null),
+                        pedido.getPrecioTotal(),
+                        pedido.getDetalles().stream()
+                                .sorted(Comparator.comparing(DetallePedido::getId,
+                                        Comparator.nullsLast(Comparator.naturalOrder())))
+                                .map(detalle -> new DetalleVendido(
+                                        detalle.getProducto().getId(),
+                                        detalle.getProducto().getNombre(),
+                                        detalle.getCantidad(),
+                                        detalle.getPrecioUnitario(),
+                                        detalle.calcularSubtotal()))
+                                .toList()))
                 .toList();
 
-        return new ReporteVentasResponse(desde, hasta, entregados.size(), totalVentas, ticketPromedio, productos);
+        return new ReporteVentasResponse(desde, hasta, entregados.size(), totalVentas, ticketPromedio, pedidos);
     }
 
     public ReporteTiemposResponse tiempos(LocalDate desde, LocalDate hasta) {

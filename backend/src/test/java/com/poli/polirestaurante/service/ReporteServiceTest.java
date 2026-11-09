@@ -17,8 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.poli.polirestaurante.dao.PedidoDAO;
 import com.poli.polirestaurante.dto.ReporteTiemposResponse;
 import com.poli.polirestaurante.dto.ReporteVentasResponse;
-import com.poli.polirestaurante.dto.ReporteVentasResponse.ProductoVendido;
 import com.poli.polirestaurante.modelo.DetallePedido;
+import com.poli.polirestaurante.modelo.Mesa;
 import com.poli.polirestaurante.modelo.Pedido;
 import com.poli.polirestaurante.modelo.Producto;
 
@@ -59,13 +59,19 @@ class ReporteServiceTest {
     }
 
     @Test
-    void ventas_sumaTotalesYAgrupaProductosOrdenadosPorUnidades() {
+    void ventas_retornaCadaPedidoConSusDetallesYConservaTotales() {
         Producto limonada = producto("Limonada", "6000");
+        limonada.setId(11L);
         Producto hamburguesa = producto("Hamburguesa", "15000");
+        hamburguesa.setId(12L);
 
         Pedido p1 = pedido(LocalDateTime.of(2026, 10, 10, 12, 0));
+        p1.setId(1L);
+        Mesa mesa = new Mesa(4, "LIBRE");
+        p1.getMesas().add(mesa);
         agregar(p1, limonada, 2);
         Pedido p2 = pedido(LocalDateTime.of(2026, 10, 11, 13, 0));
+        p2.setId(2L);
         agregar(p2, limonada, 1);
         agregar(p2, hamburguesa, 1);
         Pedido sinEntregar = pedido(null);
@@ -80,11 +86,14 @@ class ReporteServiceTest {
         assertThat(resultado.totalPedidos()).isEqualTo(2);
         assertThat(resultado.totalVentas()).isEqualByComparingTo("33000");
         assertThat(resultado.ticketPromedio()).isEqualByComparingTo("16500.00");
-        assertThat(resultado.productos())
-                .extracting(ProductoVendido::producto)
-                .containsExactly("Limonada", "Hamburguesa");
-        assertThat(resultado.productos().get(0).unidades()).isEqualTo(3L);
-        assertThat(resultado.productos().get(0).total()).isEqualByComparingTo("18000");
+        assertThat(resultado.pedidos()).hasSize(2);
+        assertThat(resultado.pedidos().get(0).pedidoId()).isEqualTo(1L);
+        assertThat(resultado.pedidos().get(0).mesaNumero()).isEqualTo(4);
+        assertThat(resultado.pedidos().get(0).total()).isEqualByComparingTo("12000");
+        assertThat(resultado.pedidos().get(0).detalles()).hasSize(1);
+        assertThat(resultado.pedidos().get(0).detalles().get(0).producto()).isEqualTo("Limonada");
+        assertThat(resultado.pedidos().get(0).detalles().get(0).cantidad()).isEqualTo(2);
+        assertThat(resultado.pedidos().get(1).detalles()).hasSize(2);
     }
 
     @Test
@@ -112,7 +121,7 @@ class ReporteServiceTest {
         assertThat(resultado.totalPedidos()).isZero();
         assertThat(resultado.totalVentas()).isEqualByComparingTo("0");
         assertThat(resultado.ticketPromedio()).isEqualByComparingTo("0");
-        assertThat(resultado.productos()).isEmpty();
+        assertThat(resultado.pedidos()).isEmpty();
     }
 
     @Test

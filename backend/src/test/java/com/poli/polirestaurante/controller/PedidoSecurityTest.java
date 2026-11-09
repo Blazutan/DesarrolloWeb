@@ -134,6 +134,25 @@ class PedidoSecurityTest {
     }
 
     @Test
+    @WithMockUser(roles = "COCINA")
+    void cancelacionCocina_permiteCocina() throws Exception {
+        mockMvc.perform(patch("/api/pedidos/1/cancelacion-cocina").with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"Producto no disponible\"}"))
+                .andExpect(status().isNotFound());
+        verify(pedidoService).cancelarPorCocina(1L, "Producto no disponible");
+    }
+
+    @Test
+    @WithMockUser(roles = "MESERO")
+    void cancelacionCocina_rechazaMesero() throws Exception {
+        mockMvc.perform(patch("/api/pedidos/1/cancelacion-cocina").with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"motivo\":\"Producto no disponible\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @WithMockUser(roles = "MESERO")
         void recibirAlerta_permiteMesero() throws Exception {
         mockMvc.perform(patch("/api/pedidos/1/recibido").with(csrf()))

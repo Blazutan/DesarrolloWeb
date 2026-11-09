@@ -146,10 +146,26 @@ import { RestauranteApiService } from '../../core/restaurante-api.service';
               <article><span>Espera de entrega</span><strong>{{ formatoTiempo(tiempos()?.promedioEsperaEntregaSegundos) }}</strong></article>
               <article><span>Tiempo total</span><strong>{{ formatoTiempo(tiempos()?.promedioTotalSegundos) }}</strong></article>
             </div>
-            <div class="table-wrap"><table><caption>Productos vendidos</caption><thead><tr><th>Producto</th><th>Unidades</th><th>Ventas</th></tr></thead>
-              <tbody>@for (producto of reporte.productos; track producto.producto) {
-                <tr><td>{{ producto.producto }}</td><td>{{ producto.unidades }}</td><td>{{ producto.total | currency:'COP':'symbol-narrow':'1.0-0' }}</td></tr>
-              } @empty { <tr><td colspan="3" class="empty-row">No hay productos vendidos.</td></tr> }</tbody>
+            <div class="table-wrap"><table><caption>Ventas por pedido</caption>
+              <thead><tr><th>Pedido</th><th>Entregado</th><th>Mesa</th><th>Total</th><th>Detalle</th></tr></thead>
+              <tbody>@for (pedido of reporte.pedidos; track pedido.pedidoId) {
+                <tr>
+                  <td>#{{ pedido.pedidoId }}</td>
+                  <td>{{ pedido.fechaEntregado | date:'short' }}</td>
+                  <td>{{ pedido.mesaNumero ?? '—' }}</td>
+                  <td>{{ pedido.total | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                  <td><details class="order-details">
+                    <summary>Ver detalle del pedido ({{ pedido.detalles.length }})</summary>
+                    <ul>@for (detalle of pedido.detalles; track $index) {
+                      <li>
+                        <span>{{ detalle.cantidad }} × {{ detalle.producto }}</span>
+                        <span>{{ detalle.precioUnitario | currency:'COP':'symbol-narrow':'1.0-0' }} c/u</span>
+                        <strong>{{ detalle.subtotal | currency:'COP':'symbol-narrow':'1.0-0' }}</strong>
+                      </li>
+                    } @empty { <li class="empty-row">El pedido no tiene detalles registrados.</li> }</ul>
+                  </details></td>
+                </tr>
+              } @empty { <tr><td colspan="5" class="empty-row">No hay pedidos entregados en este periodo.</td></tr> }</tbody>
             </table></div>
           }
         </section>
@@ -206,6 +222,9 @@ import { RestauranteApiService } from '../../core/restaurante-api.service';
     .report-cards article { display: grid; gap: 8px; padding: 16px; background: #fff; border: 1px solid #ecece5; border-radius: 10px; }
     .report-cards span { color: #777e76; font-size: 11px; }
     .report-cards strong { color: #315d46; font-size: 17px; }
+    .order-details summary { color: #315d46; cursor: pointer; font-weight: 600; white-space: nowrap; }
+    .order-details ul { display: grid; gap: 6px; min-width: 250px; margin: 8px 0 0; padding: 0; list-style: none; }
+    .order-details li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; padding: 6px 0; border-top: 1px solid #efeee9; }
     .notice.success { background: #edf5ec; color: #315d46; }
     .loading-state { padding: 38px; text-align: center; color: #777e76; }
     @media (max-width: 760px) {

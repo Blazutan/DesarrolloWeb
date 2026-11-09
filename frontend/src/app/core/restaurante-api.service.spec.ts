@@ -32,6 +32,14 @@ describe('RestauranteApiService', () => {
     request.flush({ id: 11 });
   });
 
+  it('cancela el pedido desde la operación autorizada para cocina', () => {
+    service.cancelarPedidoCocina(11, 'Producto no disponible').subscribe();
+    const request = http.expectOne('/api/pedidos/11/cancelacion-cocina');
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual({ motivo: 'Producto no disponible' });
+    request.flush({ id: 11, estado: 'CANCELADO' });
+  });
+
   it('envía el periodo seleccionado en la consulta del reporte', () => {
     service.reporteVentas('2026-01-01', '2026-01-31').subscribe();
     const request = http.expectOne(request =>
@@ -39,6 +47,6 @@ describe('RestauranteApiService', () => {
       && request.params.get('desde') === '2026-01-01'
       && request.params.get('hasta') === '2026-01-31');
     expect(request.request.method).toBe('GET');
-    request.flush({ desde: '2026-01-01', hasta: '2026-01-31', totalPedidos: 0, totalVentas: 0, ticketPromedio: 0, productos: [] });
+    request.flush({ desde: '2026-01-01', hasta: '2026-01-31', totalPedidos: 0, totalVentas: 0, ticketPromedio: 0, pedidos: [] });
   });
 });

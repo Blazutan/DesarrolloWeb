@@ -42,7 +42,7 @@ describe('authGuard', () => {
       usuarios: () => of([]),
       reporteVentas: () => of({
         desde: '2026-01-01', hasta: '2026-01-31', totalPedidos: 0,
-        totalVentas: 0, ticketPromedio: 0, productos: []
+        totalVentas: 0, ticketPromedio: 0, pedidos: []
       }),
       reporteTiempos: () => of({
         desde: '2026-01-01', hasta: '2026-01-31', pedidosAnalizados: 0,

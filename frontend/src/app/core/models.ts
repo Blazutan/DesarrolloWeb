@@ -91,7 +91,19 @@ export interface ReporteVentas {
   totalPedidos: number;
   totalVentas: number;
   ticketPromedio: number;
-  productos: Array<{ producto: string; unidades: number; total: number }>;
+  pedidos: Array<{
+    pedidoId: number;
+    fechaEntregado: string;
+    mesaNumero: number | null;
+    total: number;
+    detalles: Array<{
+      productoId: number;
+      producto: string;
+      cantidad: number;
+      precioUnitario: number;
+      subtotal: number;
+    }>;
+  }>;
 }
 
 export interface ReporteTiempos {
