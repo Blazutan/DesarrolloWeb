@@ -44,6 +44,7 @@ public class Pedido {
     private int numeroRecordatorios;
     private boolean alertaRecibida;
     private String motivoCancelacion;
+    private Integer mesaNumero;
 
     @jakarta.persistence.Column(precision = 12, scale = 2)
     private BigDecimal precioTotal = BigDecimal.ZERO;
@@ -165,6 +166,14 @@ public class Pedido {
 
     public void setMotivoCancelacion(String motivoCancelacion) {
         this.motivoCancelacion = motivoCancelacion;
+    }
+
+    public Integer getMesaNumero() {
+        return mesaNumero;
+    }
+
+    public void setMesaNumero(Integer mesaNumero) {
+        this.mesaNumero = mesaNumero;
     }
 
     public BigDecimal getPrecioTotal() {

@@ -46,7 +46,9 @@ public class ReporteService {
                 .map(pedido -> new PedidoVendido(
                         pedido.getId(),
                         pedido.getFechaEntregado(),
-                        pedido.getMesas().stream().findFirst().map(mesa -> mesa.getNumero()).orElse(null),
+                        pedido.getMesaNumero() != null
+                                ? pedido.getMesaNumero()
+                                : pedido.getMesas().stream().findFirst().map(mesa -> mesa.getNumero()).orElse(null),
                         pedido.getPrecioTotal(),
                         pedido.getDetalles().stream()
                                 .sorted(Comparator.comparing(DetallePedido::getId,
