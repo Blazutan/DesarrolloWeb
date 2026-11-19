@@ -96,6 +96,7 @@ public class Producto {
         this.disponibilidad = disponibilidad;
     }
 
+
     public Categoria getCategoria() {
         return categoria;
     }

@@ -15,8 +15,6 @@ import { defaultRoute } from '../../core/auth.guard';
   template: `
     <section class="login-page">
       <div class="login-aside">
-        <p class="eyebrow">POLIRESTAURANTE</p>
-        <div class="login-illustration" aria-hidden="true">🍽️</div>
         <h1>Qué bueno<br><em>verte de nuevo.</em></h1>
         <p>Entra a tu espacio para tomar y seguir tus pedidos.</p>
       </div>

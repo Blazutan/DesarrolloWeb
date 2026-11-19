@@ -9,7 +9,7 @@ import { MenuComponent } from './menu.component';
 describe('MenuComponent', () => {
   const productos = [{ id: 7, nombre: 'Sopa', descripcion: 'Del día', precio: 12000, disponibilidad: true, categoriaId: 1, categoriaNombre: 'Platos' }];
   const api = {
-    categorias: jasmine.createSpy().and.returnValue(of([{ id: 1, nombre: 'Platos' }])),
+    categorias: jasmine.createSpy().and.returnValue(of([{ id: 1, nombre: 'Platos', imagenUrl: 'https://ejemplo.com/platos.png' }])),
     productos: jasmine.createSpy().and.returnValue(of(productos)),
     mesasDisponibles: jasmine.createSpy().and.returnValue(of([{ id: 4, numero: 8, estado: 'LIBRE' }])),
     crearPedido: jasmine.createSpy().and.returnValue(of({ id: 41, estado: 'PENDIENTE', precioTotal: 12000, fechaCreacion: '' }))
@@ -36,6 +36,7 @@ describe('MenuComponent', () => {
     expect(api.productos).toHaveBeenCalledTimes(1);
     expect(api.mesasDisponibles).toHaveBeenCalledTimes(1);
     expect(component.productosFiltrados().length).toBe(1);
+    expect(component.imagenProducto(productos[0])).toBe('https://ejemplo.com/platos.png');
     component.categoriaSeleccionada.set(2);
     expect(component.productosFiltrados().length).toBe(0);
   });

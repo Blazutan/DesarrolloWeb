@@ -35,12 +35,27 @@ import { RestauranteApiService } from '../../core/restaurante-api.service';
               <form class="inline-form" (ngSubmit)="crearCategoria()" #categoriaForm="ngForm">
                 <label for="nueva-categoria">Nombre</label>
                 <input id="nueva-categoria" name="nuevaCategoria" [(ngModel)]="nuevaCategoria" required maxlength="80" />
+                <label for="nueva-categoria-imagen">Link de imagen</label>
+                <input id="nueva-categoria-imagen" name="nuevaCategoriaImagen" [(ngModel)]="nuevaCategoriaImagen"
+                  maxlength="500" placeholder="https://..." />
                 <button type="submit" [disabled]="categoriaForm.invalid || guardando()">Crear categoría</button>
               </form>
               <ul class="admin-list">
                 @for (categoria of categorias(); track categoria.id) {
-                  <li><span>{{ categoria.nombre }}</span><div class="row-actions">
-                    <button type="button" class="text-button" (click)="editarCategoria(categoria)">Editar</button>
+                  <li class="category-row">
+                    <div class="category-fields">
+                      <label [for]="'categoria-nombre-' + categoria.id">Nombre</label>
+                      <input [id]="'categoria-nombre-' + categoria.id"
+                        [name]="'categoriaNombre' + categoria.id"
+                        [(ngModel)]="categoria.nombre" [ngModelOptions]="{standalone: true}" maxlength="80" />
+                      <label [for]="'categoria-imagen-' + categoria.id">Link de imagen</label>
+                      <input [id]="'categoria-imagen-' + categoria.id"
+                        [name]="'categoriaImagen' + categoria.id"
+                        [(ngModel)]="categoria.imagenUrl" [ngModelOptions]="{standalone: true}" maxlength="500"
+                        placeholder="https://..." />
+                    </div>
+                    <div class="row-actions">
+                    <button type="button" class="text-button" (click)="editarCategoria(categoria)">Guardar</button>
                     <button type="button" class="danger-button" (click)="eliminarCategoria(categoria)">Eliminar</button>
                   </div></li>
                 } @empty { <li class="empty-row">No hay categorías.</li> }
@@ -201,6 +216,10 @@ import { RestauranteApiService } from '../../core/restaurante-api.service';
     .inline-form input { max-width: 240px; }
     .admin-list { display: grid; gap: 5px; margin: 16px 0 0; padding: 0; list-style: none; }
     .admin-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 0; border-bottom: 1px solid #f0f0eb; font-size: 13px; }
+    .category-row { align-items: end !important; }
+    .category-fields { display: grid; flex: 1; grid-template-columns: minmax(110px, .7fr) minmax(180px, 1.3fr); gap: 5px 8px; align-items: end; }
+    .category-fields label { align-self: end; grid-row: 1; }
+    .category-fields input { grid-row: 2; }
     .row-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
     .row-actions button { padding: 6px 8px; }
     .row-actions .danger-button { color: #9b422d; background: #fbeae6; }
@@ -231,6 +250,9 @@ import { RestauranteApiService } from '../../core/restaurante-api.service';
       .admin-page { padding: 30px 16px 50px; }
       .admin-heading { align-items: flex-start; flex-direction: column; }
       .admin-columns { grid-template-columns: 1fr; }
+      .category-row { align-items: stretch !important; flex-direction: column; }
+      .category-fields { grid-template-columns: 1fr; width: 100%; }
+      .category-fields label, .category-fields input { grid-row: auto; }
       .user-create-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .user-create-form button { grid-column: 1 / -1; }
       .inline-form { align-items: flex-start; flex-direction: column; }
@@ -253,6 +275,7 @@ export class AdministracionComponent implements OnInit {
   readonly guardando = signal(false);
   readonly inicializado = signal(false);
   nuevaCategoria = '';
+  nuevaCategoriaImagen = '';
   nuevoProducto: ProductoRequest = { nombre: '', descripcion: '', precio: 0, disponibilidad: true, categoriaId: 0 };
   numeroMesa = 1;
   nuevoUsuario: { nombre: string; correo: string; password: string; rol: Usuario['rol'] } =
@@ -289,13 +312,17 @@ export class AdministracionComponent implements OnInit {
   crearCategoria(): void {
     const nombre = this.nuevaCategoria.trim();
     if (!nombre) return;
-    this.ejecutar(this.api.crearCategoria(nombre), 'Categoría creada.', () => this.nuevaCategoria = '');
+    this.ejecutar(this.api.crearCategoria(nombre, this.nuevaCategoriaImagen.trim()), 'Categoría creada.', () => {
+      this.nuevaCategoria = '';
+      this.nuevaCategoriaImagen = '';
+    });
   }
 
   editarCategoria(categoria: Categoria): void {
-    const nombre = window.prompt('Nuevo nombre de categoría', categoria.nombre)?.trim();
-    if (!nombre || nombre === categoria.nombre) return;
-    this.ejecutar(this.api.actualizarCategoria(categoria.id, nombre), 'Categoría actualizada.');
+    const nombre = categoria.nombre?.trim();
+    if (!nombre) return;
+    const imagenUrl = categoria.imagenUrl?.trim() ?? '';
+    this.ejecutar(this.api.actualizarCategoria(categoria.id, nombre, imagenUrl), 'Categoría actualizada.');
   }
 
   eliminarCategoria(categoria: Categoria): void {

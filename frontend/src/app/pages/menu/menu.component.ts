@@ -21,7 +21,7 @@ interface LineaPedido extends PedidoItemRequest {
     <section class="hero"><div><p class="eyebrow">COCINA FRESCA · BUENOS MOMENTOS</p>
       <h1>Algo rico está<br><em>por suceder.</em></h1>
       <p class="hero-copy">Explora nuestro menú y arma tu pedido favorito.</p></div>
-      <div class="hero-art" aria-hidden="true"><span>✳</span><div class="plate"><div class="plate-food">🍲</div></div><small>PREPARADO AL MOMENTO</small></div>
+      <div class="hero-art" aria-hidden="true"><span>✳</span><div class="plate"><img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=500&q=85" alt="" /></div><small>PREPARADO AL MOMENTO</small></div>
     </section>
     <section class="menu-section">
       <div class="section-heading"><div><p class="eyebrow">NUESTRA CARTA</p><h2>El menú</h2></div><p class="muted">Ingredientes frescos, recetas con cariño.</p></div>
@@ -36,7 +36,8 @@ interface LineaPedido extends PedidoItemRequest {
         <div class="product-grid">@for (producto of productosFiltrados(); track producto.id) {
           <p-card styleClass="product-card">
             <ng-template #header><div class="product-art" [class.unavailable]="!producto.disponibilidad">
-              <span>{{ emoji(producto.categoriaNombre) }}</span><small>{{ producto.categoriaNombre || 'De la casa' }}</small>
+              <img [src]="imagenProducto(producto)" [alt]="producto.nombre" loading="lazy" />
+              <small>{{ producto.categoriaNombre || 'De la casa' }}</small>
             </div></ng-template>
             <div class="product-info"><h3>{{ producto.nombre }}</h3>
               <p>{{ producto.descripcion || 'Una preparación hecha con ingredientes frescos.' }}</p>
@@ -49,7 +50,7 @@ interface LineaPedido extends PedidoItemRequest {
           </p-card>
         }</div>
       } @else if (!cargandoMenu() && !error()) {
-        <div class="empty-state"><span aria-hidden="true">☕</span><h3>No hay productos para mostrar</h3><p>Vuelve a intentarlo en un momento.</p></div>
+        <div class="empty-state"><span aria-hidden="true"></span><h3>No hay productos para mostrar</h3><p>Vuelve a intentarlo en un momento.</p></div>
       }
 
       <section class="cart-panel" aria-labelledby="cart-title">
@@ -150,13 +151,13 @@ export class MenuComponent implements OnInit {
     });
   }
 
-  emoji(categoria: string | null): string {
-    const name = (categoria || '').toLowerCase();
-    if (name.includes('bebida')) return '🥤';
-    if (name.includes('postre')) return '🍰';
-    if (name.includes('entrada')) return '🥗';
-    if (name.includes('hamburg') || name.includes('carne')) return '🍔';
-    return '🍽️';
+  imagenProducto(producto: Producto): string {
+    const categoria = this.categorias().find(item =>
+      item.id === producto.categoriaId ||
+      item.nombre === producto.categoriaNombre);
+    const imagenCategoria = categoria?.imagenUrl?.trim();
+    if (imagenCategoria) return imagenCategoria;
+    return 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=700&q=85';
   }
 
   agregar(producto: Producto): void {

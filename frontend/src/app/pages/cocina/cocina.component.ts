@@ -22,7 +22,7 @@ import { RestauranteApiService } from '../../core/restaurante-api.service';
       @if (cargando() && pedidos().length === 0) {
         <p class="loading-state" role="status">Cargando pedidos...</p>
       } @else if (pedidosActivos().length === 0 && !error()) {
-        <div class="empty-state"><span aria-hidden="true">🍳</span><h2>No hay pedidos por preparar</h2>
+        <div class="empty-state"><span aria-hidden="true"></span><h2>No hay pedidos por preparar</h2>
           <p>Los pedidos nuevos aparecerán aquí.</p></div>
       } @else {
         <div class="kitchen-grid">
