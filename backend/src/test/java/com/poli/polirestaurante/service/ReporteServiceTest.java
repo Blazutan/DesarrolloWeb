@@ -18,7 +18,6 @@ import com.poli.polirestaurante.dao.PedidoDAO;
 import com.poli.polirestaurante.dto.ReporteTiemposResponse;
 import com.poli.polirestaurante.dto.ReporteVentasResponse;
 import com.poli.polirestaurante.modelo.DetallePedido;
-import com.poli.polirestaurante.modelo.Mesa;
 import com.poli.polirestaurante.modelo.Pedido;
 import com.poli.polirestaurante.modelo.Producto;
 
@@ -67,8 +66,7 @@ class ReporteServiceTest {
 
         Pedido p1 = pedido(LocalDateTime.of(2026, 10, 10, 12, 0));
         p1.setId(1L);
-        Mesa mesa = new Mesa(4, "LIBRE");
-        p1.getMesas().add(mesa);
+        p1.setMesaNumero(4);
         agregar(p1, limonada, 2);
         Pedido p2 = pedido(LocalDateTime.of(2026, 10, 11, 13, 0));
         p2.setId(2L);

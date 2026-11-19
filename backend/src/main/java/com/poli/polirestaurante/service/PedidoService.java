@@ -71,6 +71,7 @@ public class PedidoService {
         }
 
         Pedido pedido = pedidoDAO.crear(new Pedido(mesero, buscarEstado(PENDIENTE)));
+        pedido.setMesaNumero(mesa.getNumero());
         for (PedidoItemRequest item : datos.detalles()) {
             Producto producto = productoDAO.buscarPorId(item.productoId());
             if (producto == null) {

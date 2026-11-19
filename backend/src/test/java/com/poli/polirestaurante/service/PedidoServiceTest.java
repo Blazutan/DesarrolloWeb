@@ -107,6 +107,7 @@ class PedidoServiceTest {
         assertThat(resultado.getFechaCreacion()).isNotNull();
         assertThat(resultado.getDetalles()).hasSize(1);
         assertThat(resultado.getPrecioTotal()).isEqualByComparingTo("24000");
+        assertThat(resultado.getMesaNumero()).isEqualTo(4);
         assertThat(mesa.getEstado()).isEqualTo("OCUPADA");
         assertThat(mesa.getPedido()).isSameAs(resultado);
     }
