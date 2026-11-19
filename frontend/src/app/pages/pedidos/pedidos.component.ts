@@ -55,7 +55,7 @@ import { RestauranteApiService } from '../../core/restaurante-api.service';
           }
         </div>
       } @else if (!error()) {
-        <div class="empty-state"><span aria-hidden="true">🛎️</span><h2>Todo tranquilo por aquí</h2>
+        <div class="empty-state"><span aria-hidden="true"></span><h2>Todo tranquilo por aquí</h2>
           <p>Cuando registres un pedido, su estado aparecerá en esta lista.</p>
           <a routerLink="/menu">Ir al menú</a></div>
       }

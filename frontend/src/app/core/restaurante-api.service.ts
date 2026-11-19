@@ -46,11 +46,11 @@ export class RestauranteApiService {
     return this.http.patch<Mesa>(`/api/administracion/mesas/${id}/estado`, null, { params: { estado } });
   }
   eliminarMesa(id: number): Observable<void> { return this.http.delete<void>(`/api/administracion/mesas/${id}`); }
-  crearCategoria(nombre: string): Observable<Categoria> {
-    return this.http.post<Categoria>('/api/categorias', { nombre });
+  crearCategoria(nombre: string, imagenUrl = ''): Observable<Categoria> {
+    return this.http.post<Categoria>('/api/categorias', { nombre, imagenUrl });
   }
-  actualizarCategoria(id: number, nombre: string): Observable<Categoria> {
-    return this.http.put<Categoria>(`/api/categorias/${id}`, { nombre });
+  actualizarCategoria(id: number, nombre: string, imagenUrl = ''): Observable<Categoria> {
+    return this.http.put<Categoria>(`/api/categorias/${id}`, { nombre, imagenUrl });
   }
   eliminarCategoria(id: number): Observable<void> { return this.http.delete<void>(`/api/categorias/${id}`); }
   crearProducto(datos: ProductoRequest): Observable<Producto> {

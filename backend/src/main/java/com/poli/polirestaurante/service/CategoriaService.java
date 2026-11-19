@@ -35,6 +35,7 @@ public class CategoriaService {
             return null;
         }
         existente.setNombre(datos.getNombre());
+        existente.setImagenUrl(datos.getImagenUrl());
         return categoriaDAO.actualizar(existente);
     }
 

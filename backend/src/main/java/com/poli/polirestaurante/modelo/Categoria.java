@@ -22,6 +22,9 @@ public class Categoria {
     @Size(max = 80)
     private String nombre;
 
+    @Column(length = 500)
+    private String imagenUrl;
+
     public Categoria() {
     }
 
@@ -43,5 +46,13 @@ public class Categoria {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
     }
 }

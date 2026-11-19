@@ -67,4 +67,5 @@ public class ProductoController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         return productoService.eliminar(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
+
 }

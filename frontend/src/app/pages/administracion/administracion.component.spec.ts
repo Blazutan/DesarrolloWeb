@@ -20,7 +20,8 @@ describe('AdministracionComponent', () => {
       desde: '2026-01-01', hasta: '2026-01-31', pedidosAnalizados: 0,
       promedioPreparacionSegundos: null, promedioEsperaEntregaSegundos: null, promedioTotalSegundos: null
     })),
-    crearCategoria: jasmine.createSpy().and.returnValue(of({ id: 2, nombre: 'Bebidas' }))
+    crearCategoria: jasmine.createSpy().and.returnValue(of({ id: 2, nombre: 'Bebidas' })),
+    actualizarCategoria: jasmine.createSpy().and.returnValue(of({ id: 1, nombre: 'Platos', imagenUrl: 'https://ejemplo.com/platos.png' }))
   };
 
   beforeEach(() => {
